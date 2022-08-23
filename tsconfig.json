@@ -1,0 +1,16 @@
+{
+  "extends": "@tsconfig/node16/tsconfig.json",
+  "include": ["src/*.ts"],
+  "exclude": ["node_modules", "**/*.spec.ts"],
+  "compilerOptions": {
+    "allowJs": true,
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "noImplicitAny": false,
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "useUnknownInCatchVariables": false
+  }
+}
