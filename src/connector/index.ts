@@ -133,3 +133,5 @@ export function runConnector({
   return { jsonRpcServer, app };
 }
 export type ConnectorDefinition = Parameters<typeof runConnector>[0];
+
+export * as local from "./local";
