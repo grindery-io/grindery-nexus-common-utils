@@ -1,9 +1,9 @@
 import { EventEmitter } from "node:events";
 import WebSocket from "ws";
 import * as Sentry from "@sentry/node";
-import { createJsonRpcServer, forceObject } from "./jsonrpc";
-import { runJsonRpcServer } from "./server";
-import { ConnectorInput, ConnectorOutput } from "./ws";
+import { createJsonRpcServer, forceObject } from "../jsonrpc";
+import { runJsonRpcServer } from "../server";
+import { ConnectorInput, ConnectorOutput } from "../ws";
 
 export { ConnectorInput, ConnectorOutput };
 
@@ -77,7 +77,9 @@ export function runConnector({
   options,
 }: {
   actions: { [name: string]: (params: ConnectorInput<unknown>) => Promise<ActionOutput> };
-  triggers: { [name: string]: new (input: ConnectorInput) => TriggerBase };
+  triggers: {
+    [name: string]: (new (input: ConnectorInput) => TriggerBase) | { factory: (input: ConnectorInput) => TriggerBase };
+  };
   options?: Parameters<typeof runJsonRpcServer>[1];
 }) {
   const jsonRpcServer = createJsonRpcServer();
@@ -101,8 +103,9 @@ export function runConnector({
     if (socket.readyState !== socket.OPEN) {
       throw new Error("Socket is not open");
     }
-    if (params.key in triggers) {
-      const instance = new triggers[params.key](params);
+    const trigger = triggers[params.key];
+    if (trigger) {
+      const instance = typeof trigger === "object" ? trigger.factory(params) : new trigger(params);
       instance.on("stop", () => {
         if (socket.readyState === socket.OPEN) {
           socket.close();
