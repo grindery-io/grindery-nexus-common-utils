@@ -80,11 +80,11 @@ export abstract class TriggerBase<T = unknown> {
 
 export function runConnector({
   actions,
-  signals,
+  triggers,
   options,
 }: {
   actions: { [name: string]: (params: ConnectorInput<unknown>) => Promise<Pick<ConnectorOutput, "payload">> };
-  signals: { [name: string]: new (ws: WebSocket, input: ConnectorInput) => TriggerBase };
+  triggers: { [name: string]: new (ws: WebSocket, input: ConnectorInput) => TriggerBase };
   options?: Parameters<typeof runJsonRpcServer>[1];
 }) {
   const jsonRpcServer = createJsonRpcServer();
@@ -105,8 +105,8 @@ export function runConnector({
     if (!socket) {
       throw new Error("This method is only callable via WebSocket");
     }
-    if (params.key in signals) {
-      new signals[params.key](socket, params).start();
+    if (params.key in triggers) {
+      new triggers[params.key](socket, params).start();
     } else {
       throw new Error(`Invalid trigger: ${params.key}`);
     }
