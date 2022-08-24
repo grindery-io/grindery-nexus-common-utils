@@ -1,3 +1,5 @@
 # grindery-nexus-common-utils
 
-Common functions and type definitions for Grindery Nexus
+[TypeDoc](https://grindery-nexus-common-utils.dev.grindery.org/)
+
+Common functions and type definitions for Grindery Nexus. 
