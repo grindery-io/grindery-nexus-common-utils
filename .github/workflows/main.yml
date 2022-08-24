@@ -16,7 +16,7 @@ jobs:
           token: ${{ secrets.NPM_TOKEN }}
 
       - name: Create docs
-        run: npx typedoc --tsconfig tsconfig.json --basePath ./ src/index.ts
+        run: npx typedoc --tsconfig tsconfig.json --cname grindery-nexus-common-utils.dev.grindery.org --basePath ./ src/index.ts
 
       - name: Deploy docs
         uses: JamesIves/github-pages-deploy-action@4.1.4
