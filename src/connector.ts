@@ -1,3 +1,4 @@
+import { EventEmitter } from "node:events";
 import WebSocket from "ws";
 import * as Sentry from "@sentry/node";
 import { createJsonRpcServer, forceObject } from "./jsonrpc";
@@ -17,28 +18,23 @@ function createStopper() {
   return promise;
 }
 
-export abstract class TriggerBase<T = unknown> {
+export abstract class TriggerBase<T = unknown> extends EventEmitter {
   protected sessionId = "";
   private running = false;
   protected fields: T;
   private stopper = createStopper();
-  constructor(private ws: WebSocket, private input: ConnectorInput) {
+  constructor(private input: ConnectorInput) {
+    super();
     this.fields = input.fields as T;
     this.sessionId = input.sessionId;
-    if (ws.readyState !== WebSocket.OPEN) {
-      return;
-    }
-    ws.on("close", () => {
-      this.stop();
-    });
-    ws.on("error", () => {
-      this.stop();
-    });
   }
-  isRunning() {
+  get isRunning() {
     return this.running;
   }
   stop() {
+    if (!this.running) {
+      return;
+    }
     this.running = false;
     this.stopper.stop?.();
   }
@@ -52,13 +48,11 @@ export abstract class TriggerBase<T = unknown> {
     if (!this.running) {
       return;
     }
-    this.ws.send(
-      JSON.stringify({
-        jsonrpc: "2.0",
-        method: "notifySignal",
-        params: { key: this.input.key, sessionId: this.input.sessionId, payload },
-      })
-    );
+    this.emit("signal", {
+      jsonrpc: "2.0",
+      method: "notifySignal",
+      params: { key: this.input.key, sessionId: this.input.sessionId, payload },
+    });
   }
   start() {
     this.running = true;
@@ -68,23 +62,22 @@ export abstract class TriggerBase<T = unknown> {
         Sentry.captureException(e);
       })
       .finally(() => {
-        try {
-          this.ws.close();
-        } catch (e) {
-          /* Ignore */
-        }
+        this.running = false;
+        this.emit("stop");
       });
   }
   abstract main(): Promise<unknown>;
 }
+
+export type ActionOutput = Pick<ConnectorOutput, "payload">;
 
 export function runConnector({
   actions,
   triggers,
   options,
 }: {
-  actions: { [name: string]: (params: ConnectorInput<unknown>) => Promise<Pick<ConnectorOutput, "payload">> };
-  triggers: { [name: string]: new (ws: WebSocket, input: ConnectorInput) => TriggerBase };
+  actions: { [name: string]: (params: ConnectorInput<unknown>) => Promise<ActionOutput> };
+  triggers: { [name: string]: new (input: ConnectorInput) => TriggerBase };
   options?: Parameters<typeof runJsonRpcServer>[1];
 }) {
   const jsonRpcServer = createJsonRpcServer();
@@ -105,8 +98,26 @@ export function runConnector({
     if (!socket) {
       throw new Error("This method is only callable via WebSocket");
     }
+    if (socket.readyState !== socket.OPEN) {
+      throw new Error("Socket is not open");
+    }
     if (params.key in triggers) {
-      new triggers[params.key](socket, params).start();
+      const instance = new triggers[params.key](params);
+      instance.on("stop", () => {
+        if (socket.readyState === socket.OPEN) {
+          socket.close();
+        }
+      });
+      instance.on("signal", (message) => {
+        socket.send(JSON.stringify(message));
+      });
+      socket.on("close", () => {
+        instance.stop();
+      });
+      socket.on("error", () => {
+        instance.stop();
+      });
+      instance.start();
     } else {
       throw new Error(`Invalid trigger: ${params.key}`);
     }
@@ -118,3 +129,4 @@ export function runConnector({
   const app = runJsonRpcServer(jsonRpcServer, options);
   return { jsonRpcServer, app };
 }
+export type ConnectorDefinition = Parameters<typeof runConnector>[0];
