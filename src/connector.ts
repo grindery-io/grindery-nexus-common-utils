@@ -106,7 +106,7 @@ export function runConnector({
       throw new Error("This method is only callable via WebSocket");
     }
     if (params.key in signals) {
-      new signals[params.key](socket, params).main();
+      new signals[params.key](socket, params).start();
     } else {
       throw new Error(`Invalid trigger: ${params.key}`);
     }
