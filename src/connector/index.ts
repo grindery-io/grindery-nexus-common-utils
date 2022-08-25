@@ -71,15 +71,25 @@ export abstract class TriggerBase<T = unknown> extends EventEmitter {
 
 export type ActionOutput = Pick<ConnectorOutput, "payload">;
 
+type WebhookParams = {
+  method: string;
+  path: string;
+  payload: unknown;
+};
+
 export function runConnector({
   actions,
   triggers,
+  onWebhook,
   options,
 }: {
   actions: { [name: string]: (params: ConnectorInput<unknown>) => Promise<ActionOutput> };
   triggers: {
     [name: string]: (new (input: ConnectorInput) => TriggerBase) | { factory: (input: ConnectorInput) => TriggerBase };
   };
+  onWebhook?: (
+    params: ConnectorInput<WebhookParams>
+  ) => Promise<ActionOutput>;
   options?: Parameters<typeof runJsonRpcServer>[1];
 }) {
   const jsonRpcServer = createJsonRpcServer();
@@ -95,6 +105,13 @@ export function runConnector({
     } else {
       throw new Error(`Invalid action: ${params.key}`);
     }
+  }
+  async function callWebhook(params: ConnectorInput<WebhookParams>): Promise<ConnectorOutput> {
+    if (!onWebhook) {
+      throw new Error("Webhook is not supported");
+    }
+    const result = await onWebhook(params);
+    return { ...result, key: params.key, sessionId: params.sessionId };
   }
   async function setupSignal(params: ConnectorInput, { socket }: { socket: WebSocket }) {
     if (!socket) {
@@ -129,6 +146,7 @@ export function runConnector({
 
   jsonRpcServer.addMethod("setupSignal", forceObject(setupSignal));
   jsonRpcServer.addMethod("runAction", forceObject(runAction));
+  jsonRpcServer.addMethod("callWebhook", forceObject(callWebhook));
   const app = runJsonRpcServer(jsonRpcServer, options);
   return { jsonRpcServer, app };
 }
