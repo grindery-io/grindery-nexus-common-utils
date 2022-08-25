@@ -71,7 +71,7 @@ export abstract class TriggerBase<T = unknown> extends EventEmitter {
 
 export type ActionOutput = Pick<ConnectorOutput, "payload">;
 
-type WebhookParams = {
+export type WebhookParams = {
   method: string;
   path: string;
   payload: unknown;
