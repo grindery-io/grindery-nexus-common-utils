@@ -67,7 +67,7 @@ export type WorkflowSchema = {
   creator: string; // The DID of the creator of this workflow.
   signature: string; // signature of the workflow definition by the creator (i.e JSON of all fields except signature).
   state: "on" | "off";
-  source?: "string"; // URN of the app that created this workflow
+  source?: string; // URN of the app that created this workflow
 };
 export type DisplaySchema = {
   label: string; // A short label for this trigger or action e.g "New Record" or "Create Record".
