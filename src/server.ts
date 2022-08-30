@@ -30,7 +30,7 @@ export function runJsonRpcServer(
 
   app.post("/", (req, res) => {
     const body = req.body || {};
-    handleRequest(jsonRpc, body, { socket: null })
+    handleRequest(jsonRpc, body, { socket: null, context: {}, req })
       .then((result) => {
         if (result instanceof Response) {
           result.sendResponse(res);
@@ -54,6 +54,7 @@ export function runJsonRpcServer(
   const wss = new Server({ server });
   wss.on("connection", (ws) => {
     console.log("Client connected");
+    const context = {};
     ws.on("message", async function message(data) {
       let parsed = {};
       try {
@@ -61,7 +62,7 @@ export function runJsonRpcServer(
       } catch (e) {
         console.error("Invalid message", e);
       }
-      let result = await handleRequest(jsonRpc, parsed, { socket: ws });
+      let result = await handleRequest(jsonRpc, parsed, { socket: ws, context });
       if (result instanceof Response) {
         if (result.getResponseData()?.jsonrpc === "2.0") {
           result = result.getResponseData();
