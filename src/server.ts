@@ -29,7 +29,7 @@ export function runJsonRpcServer(
   }: {
     port?: number;
     mutateRoutes?: (app: ReturnType<typeof express>) => void;
-    middlewares?: ReturnType<typeof bodyParser>[];
+    middlewares?: express.RequestHandler[];
   } = {}
 ) {
   port = parseInt(process.env.PORT || "", 10) || 3000;
