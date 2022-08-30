@@ -22,11 +22,21 @@ async function handleRequest(server, body, extra) {
 
 export function runJsonRpcServer(
   jsonRpc: JSONRPCServer,
-  { port, mutateRoutes }: { port?: number; mutateRoutes?: (app: ReturnType<typeof express>) => void } = {}
+  {
+    port,
+    mutateRoutes,
+    middlewares = [bodyParser.json()],
+  }: {
+    port?: number;
+    mutateRoutes?: (app: ReturnType<typeof express>) => void;
+    middlewares?: ReturnType<typeof bodyParser>[];
+  } = {}
 ) {
   port = parseInt(process.env.PORT || "", 10) || 3000;
   const app = express();
-  app.use(bodyParser.json());
+  for (const middleware of middlewares) {
+    app.use(middleware);
+  }
 
   app.post("/", (req, res) => {
     const body = req.body || {};
