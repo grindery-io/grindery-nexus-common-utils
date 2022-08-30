@@ -12,7 +12,7 @@ async function handleRequest(server, body, extra) {
       if ([-32600, -32601, -32602, -32700].includes(result.error.code)) {
         return new Response(400, result);
       }
-      return new Response(400, result);
+      return new Response(500, result);
     }
     return result;
   } else {
