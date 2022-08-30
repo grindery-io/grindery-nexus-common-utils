@@ -4,8 +4,9 @@ import express from "express";
 import { Server } from "ws";
 import { Response } from "./utils";
 import { JSONRPCServer } from "json-rpc-2.0";
+import { ServerParams } from "./jsonrpc";
 
-async function handleRequest(server, body, extra) {
+async function handleRequest(server: JSONRPCServer<ServerParams>, body, extra: ServerParams) {
   const result = await server.receive(body, extra);
   if (result) {
     if (result.error) {
@@ -21,7 +22,7 @@ async function handleRequest(server, body, extra) {
 }
 
 export function runJsonRpcServer(
-  jsonRpc: JSONRPCServer,
+  jsonRpc: JSONRPCServer<ServerParams>,
   {
     port,
     mutateRoutes,
@@ -40,7 +41,7 @@ export function runJsonRpcServer(
 
   app.post("/", (req, res) => {
     const body = req.body || {};
-    handleRequest(jsonRpc, body, { socket: null, context: {}, req })
+    handleRequest(jsonRpc, body, { socket: undefined, context: {}, req })
       .then((result) => {
         if (result instanceof Response) {
           result.sendResponse(res);
@@ -72,10 +73,11 @@ export function runJsonRpcServer(
       } catch (e) {
         console.error("Invalid message", e);
       }
-      let result = await handleRequest(jsonRpc, parsed, { socket: ws, context });
+      let result:unknown = await handleRequest(jsonRpc, parsed, { socket: ws, context });
       if (result instanceof Response) {
-        if (result.getResponseData()?.jsonrpc === "2.0") {
-          result = result.getResponseData();
+        const responseData = result.getResponseData();
+        if (typeof responseData === "object" && responseData?.jsonrpc === "2.0") {
+          result = responseData;
         } else {
           return;
         }

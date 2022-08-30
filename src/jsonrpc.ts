@@ -1,6 +1,7 @@
 import { createJSONRPCErrorResponse, JSONRPCErrorCode, JSONRPCParams, JSONRPCServer } from "json-rpc-2.0";
 import * as Sentry from "@sentry/node";
 import WebSocket from "ws";
+import { Request } from "express";
 
 export class InvalidParamsError extends Error {
   constructor(message?: string) {
@@ -25,7 +26,9 @@ const exceptionMiddleware = async (next, request, serverParams) => {
     }
   }
 };
-export function forceObject<T extends { [key: string]: unknown }>(func: (params: T, extra: { socket: WebSocket }) => unknown) {
+export function forceObject<T extends { [key: string]: unknown }>(
+  func: (params: T, extra: { socket: WebSocket }) => unknown
+) {
   return async function (params: Partial<JSONRPCParams> | undefined, extra) {
     if (typeof params !== "object" || Array.isArray(params)) {
       throw new InvalidParamsError("Only parameter object are supported");
@@ -33,8 +36,13 @@ export function forceObject<T extends { [key: string]: unknown }>(func: (params:
     return func(params as T, extra);
   };
 }
+export type ServerParams = {
+  req?: Request;
+  socket?: WebSocket;
+  context: Record<string, unknown>;
+};
 export function createJsonRpcServer() {
-  const server = new JSONRPCServer();
+  const server = new JSONRPCServer<ServerParams>();
   server.applyMiddleware(exceptionMiddleware);
   server.addMethod("ping", () => "pong");
   return server;
