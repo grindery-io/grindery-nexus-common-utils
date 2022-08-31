@@ -113,7 +113,7 @@ export function runConnector({
     const result = await onWebhook(params);
     return { ...result, key: params.key, sessionId: params.sessionId };
   }
-  async function setupSignal(params: ConnectorInput, { socket }: { socket: WebSocket }) {
+  async function setupSignal(params: ConnectorInput, { socket }: { socket?: WebSocket}) {
     if (!socket) {
       throw new Error("This method is only callable via WebSocket");
     }

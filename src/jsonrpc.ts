@@ -1,4 +1,10 @@
-import { createJSONRPCErrorResponse, JSONRPCErrorCode, JSONRPCParams, JSONRPCServer } from "json-rpc-2.0";
+import {
+  createJSONRPCErrorResponse,
+  JSONRPCErrorCode,
+  JSONRPCParams,
+  JSONRPCServer,
+  SimpleJSONRPCMethod,
+} from "json-rpc-2.0";
 import * as Sentry from "@sentry/node";
 import WebSocket from "ws";
 import { Request } from "express";
@@ -26,21 +32,21 @@ const exceptionMiddleware = async (next, request, serverParams) => {
     }
   }
 };
-export function forceObject<T extends { [key: string]: unknown }>(
-  func: (params: T, extra: { socket: WebSocket }) => unknown
-) {
-  return async function (params: Partial<JSONRPCParams> | undefined, extra) {
-    if (typeof params !== "object" || Array.isArray(params)) {
-      throw new InvalidParamsError("Only parameter object are supported");
-    }
-    return func(params as T, extra);
-  };
-}
 export type ServerParams = {
   req?: Request;
   socket?: WebSocket;
   context: Record<string, unknown>;
 };
+export function forceObject<T extends { [key: string]: unknown }>(
+  func: (params: T, extra: ServerParams) => Promise<unknown>
+): SimpleJSONRPCMethod<ServerParams> {
+  return async function (params: Partial<JSONRPCParams> | undefined, extra) {
+    if (typeof params !== "object" || Array.isArray(params)) {
+      throw new InvalidParamsError("Only parameter object are supported");
+    }
+    return await func(params as T, extra || { context: {} });
+  };
+}
 export function createJsonRpcServer() {
   const server = new JSONRPCServer<ServerParams>();
   server.applyMiddleware(exceptionMiddleware);
