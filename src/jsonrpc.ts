@@ -32,14 +32,14 @@ const exceptionMiddleware = async (next, request, serverParams) => {
     }
   }
 };
-export type ServerParams = {
+export type ServerParams<TContext extends Record<string, unknown> = Record<string, unknown>> = {
   req?: Request;
   socket?: WebSocket;
-  context: Record<string, unknown>;
+  context: Partial<TContext>;
 };
-export function forceObject<T extends { [key: string]: unknown }>(
-  func: (params: T, extra: ServerParams) => Promise<unknown>
-): SimpleJSONRPCMethod<ServerParams> {
+export function forceObject<T extends { [key: string]: unknown }, TContext extends Record<string, unknown>>(
+  func: (params: T, extra: ServerParams<TContext>) => Promise<unknown>
+): SimpleJSONRPCMethod<ServerParams<TContext>> {
   return async function (params: Partial<JSONRPCParams> | undefined, extra) {
     if (typeof params !== "object" || Array.isArray(params)) {
       throw new InvalidParamsError("Only parameter object are supported");
@@ -47,8 +47,8 @@ export function forceObject<T extends { [key: string]: unknown }>(
     return await func(params as T, extra || { context: {} });
   };
 }
-export function createJsonRpcServer() {
-  const server = new JSONRPCServer<ServerParams>();
+export function createJsonRpcServer<TContext extends Record<string, unknown>>() {
+  const server = new JSONRPCServer<ServerParams<TContext>>();
   server.applyMiddleware(exceptionMiddleware);
   server.addMethod("ping", () => "pong");
   return server;
