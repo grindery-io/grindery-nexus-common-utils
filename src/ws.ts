@@ -52,14 +52,14 @@ export class JsonRpcWebSocket {
     this.ws.onmessage = (event) => {
       this.serverAndClient.receiveAndSend(JSON.parse(event.data.toString()));
     };
-    this.ws.onclose = (event) => {
-      this.serverAndClient.rejectAllPendingRequests(`Connection is closed (${event.reason}).`);
-    };
-    this.ws.onerror = (e) => {
+    this.ws.on("close", (code, reason) => {
+      this.serverAndClient.rejectAllPendingRequests(`Connection is closed (${code} - ${reason?.toString("binary")}).`);
+    });
+    this.ws.on("error", (e) => {
       console.error("WebSocket error:", e);
       this.ws.close();
       this.serverAndClient.rejectAllPendingRequests(`Connection error: ${e.toString()}`);
-    };
+    });
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   addMethod<T extends Record<string, unknown>>(name: string, method: (params: T | undefined) => PromiseLike<any>) {
