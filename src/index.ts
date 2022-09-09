@@ -1,6 +1,6 @@
-export * as connector from "./connector";
-export * as jsonrpc from "./jsonrpc";
-export * as server from "./server";
-export * as types from "./types";
-export * as utils from "./utils";
-export * as ws from "./ws";
+export * from "./connector";
+export * from "./jsonrpc";
+export * from "./server";
+export * from "./types";
+export * from "./utils";
+export * from "./ws";

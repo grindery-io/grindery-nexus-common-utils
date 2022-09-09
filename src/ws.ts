@@ -1,18 +1,6 @@
 import { JSONRPCServer, JSONRPCClient, JSONRPCServerAndClient, JSONRPCParams } from "json-rpc-2.0";
 import WebSocket from "ws";
 
-type WebSocketPayloadCommon = {
-  key: string;
-  sessionId: string;
-};
-export type ConnectorInput<T = unknown> = WebSocketPayloadCommon & {
-  credentials: unknown;
-  fields: T;
-};
-export type ConnectorOutput = WebSocketPayloadCommon & {
-  payload: unknown;
-};
-
 export class JsonRpcWebSocket {
   private serverAndClient: JSONRPCServerAndClient;
   private ws: WebSocket;

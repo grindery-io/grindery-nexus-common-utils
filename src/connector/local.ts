@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
-import { ConnectorDefinition, ConnectorInput } from "./index";
+import { ConnectorDefinition } from "./run";
+import { ConnectorInput } from "./types";
 
 async function runAction(def: ConnectorDefinition, key: string, payload: unknown) {
   const action = def.actions[key];
