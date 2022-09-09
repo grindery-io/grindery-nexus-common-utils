@@ -146,6 +146,12 @@ const DEFAULT_SCHEMAS: { [key: string]: ConnectorSchema | Promise<ConnectorSchem
   },
 };
 
+function verifyConnectorId(connectorId: string) {
+  if (typeof connectorId !== "string" || !/^[a-zA-Z0-9-_]+$/.test(connectorId)) {
+    throw new Error("Invalid connector ID");
+  }
+}
+
 class SchemaCache {
   private schemas: { [key: string]: ConnectorSchema | Promise<ConnectorSchema> } = { ...DEFAULT_SCHEMAS };
   private currentCommit = "";
@@ -185,6 +191,7 @@ class SchemaCache {
     }
   }
   async getConnectorSchema(connectorId: string): Promise<ConnectorSchema> {
+    verifyConnectorId(connectorId);
     this.validateSchemaCache();
     if (connectorId in this.schemas) {
       return this.schemas[connectorId];
