@@ -85,11 +85,11 @@ export function runConnector({
 }: {
   actions: { [name: string]: (params: ConnectorInput<unknown>) => Promise<ActionOutput> };
   triggers: {
-    [name: string]: (new (input: ConnectorInput) => TriggerBase) | { factory: (input: ConnectorInput) => TriggerBase };
+    [name: string]:
+      | (new (input: ConnectorInput) => TriggerBase)
+      | { factory: (input: ConnectorInput) => Promise<TriggerBase> | TriggerBase };
   };
-  onWebhook?: (
-    params: ConnectorInput<WebhookParams>
-  ) => Promise<ActionOutput>;
+  onWebhook?: (params: ConnectorInput<WebhookParams>) => Promise<ActionOutput>;
   options?: Parameters<typeof runJsonRpcServer>[1];
 }) {
   const jsonRpcServer = createJsonRpcServer();
@@ -113,7 +113,7 @@ export function runConnector({
     const result = await onWebhook(params);
     return { ...result, key: params.key, sessionId: params.sessionId };
   }
-  async function setupSignal(params: ConnectorInput, { socket }: { socket?: WebSocket}) {
+  async function setupSignal(params: ConnectorInput, { socket }: { socket?: WebSocket }) {
     if (!socket) {
       throw new Error("This method is only callable via WebSocket");
     }
@@ -122,7 +122,7 @@ export function runConnector({
     }
     const trigger = triggers[params.key];
     if (trigger) {
-      const instance = typeof trigger === "object" ? trigger.factory(params) : new trigger(params);
+      const instance = typeof trigger === "object" ? await trigger.factory(params) : new trigger(params);
       instance.on("stop", () => {
         if (socket.readyState === socket.OPEN) {
           socket.close();

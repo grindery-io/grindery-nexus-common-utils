@@ -16,7 +16,9 @@ async function runTrigger(def: ConnectorDefinition, key: string, payload: unknow
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const instance =
-    typeof trigger === "object" ? trigger.factory(payload as ConnectorInput) : new trigger(payload as ConnectorInput);
+    typeof trigger === "object"
+      ? await trigger.factory(payload as ConnectorInput)
+      : new trigger(payload as ConnectorInput);
   instance.on("signal", (msg) => console.log("New signal:", msg.params.payload));
   instance.start();
   console.log(`Trigger ${key} started`);
