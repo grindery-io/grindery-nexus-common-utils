@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 import * as Sentry from "@sentry/node";
-import { ConnectorInput } from "../ws";
+import { ConnectorInput } from ".";
 
 function createStopper() {
   let resolve, reject;
