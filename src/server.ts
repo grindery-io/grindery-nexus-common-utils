@@ -21,17 +21,19 @@ async function handleRequest(server: JSONRPCServer<ServerParams>, body, extra: S
   }
 }
 
+export type RunJsonRpcServerOptions = {
+  port?: number;
+  mutateRoutes?: (app: ReturnType<typeof express>) => void;
+  middlewares?: express.RequestHandler[];
+};
+
 export function runJsonRpcServer(
   jsonRpc: JSONRPCServer<ServerParams>,
   {
     port,
     mutateRoutes,
     middlewares = [bodyParser.json()],
-  }: {
-    port?: number;
-    mutateRoutes?: (app: ReturnType<typeof express>) => void;
-    middlewares?: express.RequestHandler[];
-  } = {}
+  }: RunJsonRpcServerOptions = {}
 ) {
   port = parseInt(process.env.PORT || "", 10) || 3000;
   const app = express();

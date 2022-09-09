@@ -1,6 +1,6 @@
 import WebSocket from "ws";
 import { createJsonRpcServer, forceObject } from "../jsonrpc";
-import { runJsonRpcServer } from "../server";
+import { runJsonRpcServer, RunJsonRpcServerOptions } from "../server";
 import { TriggerBase } from "./triggerBase";
 import {
   ConnectorInput,
@@ -11,23 +11,28 @@ import {
   ConnectorOutput,
 } from "./types";
 
-export function runConnector({
-  actions,
-  triggers,
-  webhooks,
-  inputProviders,
-  options,
-}: {
-  actions: { [name: string]: (params: ConnectorInput<unknown>) => Promise<ActionOutput> };
+type Action = (params: ConnectorInput<unknown>) => Promise<ActionOutput>;
+
+type WebhookHandler = (params: ConnectorInput<WebhookParams>) => Promise<ActionOutput>;
+
+type InputProvider = (params: InputProviderInput) => Promise<InputProviderOutput>;
+
+type TriggerFactory =
+  | (new (input: ConnectorInput) => TriggerBase)
+  | {
+      factory: (input: ConnectorInput) => Promise<TriggerBase> | TriggerBase;
+    };
+
+export type ConnectorDefinition = {
+  actions: { [name: string]: Action };
   triggers: {
-    [name: string]:
-      | (new (input: ConnectorInput) => TriggerBase)
-      | { factory: (input: ConnectorInput) => Promise<TriggerBase> | TriggerBase };
+    [name: string]: TriggerFactory;
   };
-  webhooks?: { [key: string]: (params: ConnectorInput<WebhookParams>) => Promise<ActionOutput> };
-  inputProviders?: { [key: string]: (params: InputProviderInput) => Promise<InputProviderOutput> };
-  options?: Parameters<typeof runJsonRpcServer>[1];
-}) {
+  webhooks?: { [key: string]: WebhookHandler };
+  inputProviders?: { [key: string]: InputProvider };
+  options?: RunJsonRpcServerOptions;
+};
+export function runConnector({ actions, triggers, webhooks, inputProviders, options }: ConnectorDefinition) {
   const jsonRpcServer = createJsonRpcServer();
 
   async function runAction(params: ConnectorInput): Promise<ConnectorOutput> {
@@ -96,4 +101,3 @@ export function runConnector({
   const app = runJsonRpcServer(jsonRpcServer, options);
   return { jsonRpcServer, app };
 }
-export type ConnectorDefinition = Parameters<typeof runConnector>[0];
