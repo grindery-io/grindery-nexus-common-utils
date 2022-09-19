@@ -19,11 +19,21 @@ export class Response<T> {
   }
 }
 
+const TOKEN_TRANSFORMERS = {
+  urlencode: (s) => encodeURIComponent(String(s)),
+  urldecode: (s) => decodeURIComponent(String(s)),
+  json: (s) => JSON.stringify(s),
+  "": (s) => String(s),
+};
+
 export function replaceTokens<T>(obj: T, context: { [key: string]: unknown }): T {
   if (typeof obj === "string") {
-    return obj.replace(/\{\{\s*([^}]+)\s*\}\}/g, (_original, key) =>
-      String((_.get(context, key, "") as string) ?? "")
-    ) as unknown as T;
+    return obj.replace(/\{\{\s*([^}]+)\s*\}\}/g, (_original, key) => {
+      const parts = key.split("|");
+      const transform = TOKEN_TRANSFORMERS[parts[1]] || TOKEN_TRANSFORMERS[""];
+      const ret = transform((_.get(context, parts[0], "") as string) ?? "");
+      return ret;
+    }) as unknown as T;
   }
   if (typeof obj === "object") {
     if (Array.isArray(obj)) {
