@@ -10,6 +10,7 @@ export type AuthCredentialsDisplayInfo = {
   id: string;
   name: string;
   createdAt: string;
+  token?: string;
 };
 export type MakeRequestResponse = {
   data: unknown;
