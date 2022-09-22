@@ -59,6 +59,8 @@ type RemoveIndex<T> = {
 };
 type JWTPayloadPure = RemoveIndex<jose.JWTPayload>;
 
+export type TypedJWTPayload<T> = JWTPayloadPure & T;
+
 class JwtTools {
   private keys = initKeys();
   constructor(private defaultIssuer: string) {}
@@ -97,17 +99,17 @@ class JwtTools {
   getPublicJwk = async () => jose.exportJWK((await this.keys).ECDSA_PUBLIC);
   typedCipher = <T = unknown>(audience: string) =>
     Object.freeze({
-      encrypt: (payload: T & JWTPayloadPure, expirationTime: number | string) =>
+      encrypt: (payload: TypedJWTPayload<T>, expirationTime: number | string) =>
         this.encryptJWT({ aud: audience, ...payload }, expirationTime),
       decrypt: async (token: string, options: jose.JWTDecryptOptions = {}) =>
-        (await this.decryptJWT(token, { audience, ...options })).payload as T & JWTPayloadPure,
+        (await this.decryptJWT(token, { audience, ...options })).payload as TypedJWTPayload<T>,
     });
   typedToken = <T = unknown>(audience: string) =>
     Object.freeze({
-      sign: (payload: T & JWTPayloadPure, expirationTime: number | string) =>
+      sign: (payload: TypedJWTPayload<T>, expirationTime: number | string) =>
         this.signJWT({ aud: audience, ...payload }, expirationTime),
       verify: async (token: string, options: jose.JWTVerifyOptions = {}) =>
-        (await this.verifyJWT(token, { audience, ...options })).payload as T & JWTPayloadPure,
+        (await this.verifyJWT(token, { audience, ...options })).payload as TypedJWTPayload<T>,
     });
 }
 
