@@ -31,6 +31,7 @@ export type AuthenticationSchema = {
   // fields: FieldsSchema[];
   label?: string | RequestSchema;
   authenticatedRequestTemplate?: Partial<RequestSchema>;
+  allowedDomains?: string[];
 } & (
   | {
       type: "basic" | "custom" | "digest";
