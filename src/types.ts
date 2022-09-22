@@ -7,7 +7,7 @@ export type RequestSchema = {
   auth?: string[] | object;
 };
 export type AuthCredentialsDisplayInfo = {
-  id: string;
+  key: string;
   name: string;
   createdAt: string;
   token?: string;
