@@ -90,6 +90,20 @@ class JwtTools {
       ...options,
     });
   getPublicJwk = async () => jose.exportJWK((await this.keys).ECDSA_PUBLIC);
+  typedCipher = <T = unknown>(audience: string) =>
+    Object.freeze({
+      encrypt: (payload: T & jose.JWTPayload, expirationTime: number | string) =>
+        this.encryptJWT({ aud: audience, ...payload }, expirationTime),
+      decrypt: async (token: string, options: jose.JWTDecryptOptions) =>
+        (await this.decryptJWT(token, { audience, ...options })).payload as T & jose.JWTPayload,
+    });
+  typedToken = <T = unknown>(audience: string) =>
+    Object.freeze({
+      sign: (payload: T & jose.JWTPayload, expirationTime: number | string) =>
+        this.signJWT({ aud: audience, ...payload }, expirationTime),
+      verify: async (token: string, options: jose.JWTVerifyOptions) =>
+        (await this.verifyJWT(token, { audience, ...options })).payload as T & jose.JWTPayload,
+    });
 }
 
 let instance: JwtTools;
