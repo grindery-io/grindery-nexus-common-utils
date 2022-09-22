@@ -13,6 +13,7 @@ export type AuthCredentialsDisplayInfo = {
   token?: string;
 };
 export type MakeRequestResponse = {
+  status?: number;
   data: unknown;
   headers: { [key: string]: string };
 };
