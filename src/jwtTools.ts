@@ -99,14 +99,14 @@ class JwtTools {
     Object.freeze({
       encrypt: (payload: T & JWTPayloadPure, expirationTime: number | string) =>
         this.encryptJWT({ aud: audience, ...payload }, expirationTime),
-      decrypt: async (token: string, options: jose.JWTDecryptOptions) =>
+      decrypt: async (token: string, options: jose.JWTDecryptOptions = {}) =>
         (await this.decryptJWT(token, { audience, ...options })).payload as T & JWTPayloadPure,
     });
   typedToken = <T = unknown>(audience: string) =>
     Object.freeze({
       sign: (payload: T & JWTPayloadPure, expirationTime: number | string) =>
         this.signJWT({ aud: audience, ...payload }, expirationTime),
-      verify: async (token: string, options: jose.JWTVerifyOptions) =>
+      verify: async (token: string, options: jose.JWTVerifyOptions = {}) =>
         (await this.verifyJWT(token, { audience, ...options })).payload as T & JWTPayloadPure,
     });
 }
