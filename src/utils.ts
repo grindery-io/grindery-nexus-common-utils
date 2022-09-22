@@ -28,10 +28,10 @@ const TOKEN_TRANSFORMERS = {
 
 export function replaceTokens<T>(obj: T, context: { [key: string]: unknown }): T {
   if (typeof obj === "string") {
-    return obj.replace(/\{\{\s*([^}]+)\s*\}\}/g, (_original, key) => {
+    return obj.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_original, key) => {
       const parts = key.split("|");
-      const transform = TOKEN_TRANSFORMERS[parts[1]] || TOKEN_TRANSFORMERS[""];
-      const ret = transform((_.get(context, parts[0], "") as string) ?? "");
+      const transform = TOKEN_TRANSFORMERS[parts[1] ? parts[1].trim() : ""] || TOKEN_TRANSFORMERS[""];
+      const ret = transform((_.get(context, parts[0].trim(), "") as string) ?? "");
       return ret;
     }) as unknown as T;
   }
