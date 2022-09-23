@@ -28,6 +28,7 @@ export type Oauth2Config = {
 
 export type AuthenticationSchema = {
   test: RequestSchema;
+  defaultDisplayName?: string;
   // fields: FieldsSchema[];
   label?: string | RequestSchema;
   authenticatedRequestTemplate?: Partial<RequestSchema>;
