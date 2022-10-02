@@ -3,10 +3,10 @@
   "version": "1.0.33",
   "description": "Common functions and type definitions for Grindery Nexus",
   "main": "dist/index.js",
-  "type": "commonjs",
   "scripts": {
-    "prepare": "tsc",
-    "watch": "tsc --watch"
+    "prepare": "tsc && husky install",
+    "watch": "tsc --watch",
+    "test": "jest"
   },
   "files": [
     "dist",
@@ -19,6 +19,12 @@
     "url": "https://github.com/grindery-io/grindery-nexus-common-utils.git"
   },
   "license": "MIT",
+  "lint-staged": {
+    "**/*.{js,jsx,ts,tsx}": [
+      "npx --yes prettier --write",
+      "npx --yes eslint"
+    ]
+  },
   "dependencies": {
     "@sentry/node": "^6.17.8",
     "@tradle/key-encoder": "^2.1.1",
@@ -41,6 +47,9 @@
     "@typescript-eslint/eslint-plugin": "^5.19.0",
     "@typescript-eslint/parser": "^5.19.0",
     "eslint": "^8.13",
+    "husky": "^8.0.0",
+    "prettier": "^2.7.1",
+    "ts-jest": "^29.0.3",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.3"
   }

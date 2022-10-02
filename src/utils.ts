@@ -26,7 +26,12 @@ const TOKEN_TRANSFORMERS = {
   "": (s) => String(s),
 };
 
-export function replaceTokens<T>(obj: T, context: { [key: string]: unknown }): T {
+// > replaceTokens("abc{{ '{{' }} def }}abc")
+// "abc{{ def }}abc"
+export function replaceTokens<T>(
+  obj: T,
+  context: { [key: string]: unknown }
+): T {
   if (typeof obj === "string") {
     return obj.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_original, key) => {
       const parts = key.split("|");
@@ -34,8 +39,12 @@ export function replaceTokens<T>(obj: T, context: { [key: string]: unknown }): T
       if (m) {
         return m[2];
       }
-      const transform = TOKEN_TRANSFORMERS[parts[1] ? parts[1].trim() : ""] || TOKEN_TRANSFORMERS[""];
-      const ret = transform((_.get(context, parts[0].trim(), "") as string) ?? "");
+      const transform =
+        TOKEN_TRANSFORMERS[parts[1] ? parts[1].trim() : ""] ||
+        TOKEN_TRANSFORMERS[""];
+      const ret = transform(
+        (_.get(context, parts[0].trim(), "") as string) ?? ""
+      );
       return ret;
     }) as unknown as T;
   }
