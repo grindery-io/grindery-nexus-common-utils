@@ -10,14 +10,14 @@ export class JsonRpcWebSocket {
     this.serverAndClient = new JSONRPCServerAndClient(
       new JSONRPCServer(),
       new JSONRPCClient(async (request) => {
-        if (this.ws.readyState === WebSocket.OPEN) {
-          this.ws.send(JSON.stringify(request));
-          return;
-        }
-        if (this.ws.readyState !== WebSocket.CONNECTING) {
-          throw new Error("WebSocket is not open");
-        }
         await new Promise((resolve, reject) => {
+          if (this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify(request));
+            return;
+          }
+          if (this.ws.readyState !== WebSocket.CONNECTING) {
+            throw new Error("WebSocket is not open");
+          }
           const onError = function (e) {
             reject(e || new Error("Failed to send request to WebSocket"));
           };
@@ -38,7 +38,17 @@ export class JsonRpcWebSocket {
       })
     );
     this.ws.onmessage = (event) => {
-      this.serverAndClient.receiveAndSend(JSON.parse(event.data.toString()));
+      let msg;
+      try {
+        msg = JSON.parse(event.data.toString());
+      } catch (e) {
+        console.warn("Received invalid JSON message from WebSocket", e, { data: event.data });
+        if (this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify({ jsonrpc: "2.0", error: { code: -32700, message: "Parse error" }, id: null }));
+        }
+        return;
+      }
+      this.serverAndClient.receiveAndSend(msg);
     };
     this.ws.on("close", (code, reason) => {
       this.serverAndClient.rejectAllPendingRequests(`Connection is closed (${code} - ${reason?.toString("binary")}).`);
