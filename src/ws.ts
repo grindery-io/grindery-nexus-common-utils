@@ -71,7 +71,7 @@ export class JsonRpcWebSocket extends EventEmitter {
     this.serverAndClient.addMethod(name, method as any);
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  request<T extends JSONRPCParams, U = unknown>(method: string, params?: T, clientParams?: any): PromiseLike<U> {
+  async request<T extends JSONRPCParams, U = unknown>(method: string, params?: T, clientParams?: any): Promise<U> {
     let running = true;
     const keepAlive = () => {
       if (!running) {
@@ -84,12 +84,14 @@ export class JsonRpcWebSocket extends EventEmitter {
         this.serverAndClient
           .timeout(5000)
           .request("ping")
-          .then(keepAlive, () => console.error(`WebSocket connection is closed while calling ${method}`));
+          .then(keepAlive, () => {
+            this.ws.close(3001, "Failed to ping server");
+          });
       }, 5000);
     };
     keepAlive();
     try {
-      return this.serverAndClient.timeout(this.requestTimeout).request(method, params, clientParams);
+      return await this.serverAndClient.timeout(this.requestTimeout).request(method, params, clientParams);
     } finally {
       running = false;
     }
