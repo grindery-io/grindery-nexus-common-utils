@@ -88,7 +88,7 @@ export class JsonRpcWebSocket {
       running = false;
     }
   }
-  close() {
-    this.ws.close();
+  close(code = 1000, reason = "Called close function on JsonRpcWebSocket") {
+    this.ws.close(code, reason);
   }
 }

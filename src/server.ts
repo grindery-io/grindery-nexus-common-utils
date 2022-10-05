@@ -29,11 +29,7 @@ export type RunJsonRpcServerOptions = {
 
 export function runJsonRpcServer(
   jsonRpc: JSONRPCServer<ServerParams>,
-  {
-    port,
-    mutateRoutes,
-    middlewares = [bodyParser.json()],
-  }: RunJsonRpcServerOptions = {}
+  { port, mutateRoutes, middlewares = [bodyParser.json()] }: RunJsonRpcServerOptions = {}
 ) {
   port = parseInt(process.env.PORT || "", 10) || 3000;
   const app = express();
@@ -75,7 +71,7 @@ export function runJsonRpcServer(
       } catch (e) {
         console.error("Invalid message", e);
       }
-      let result:unknown = await handleRequest(jsonRpc, parsed, { socket: ws, context });
+      let result: unknown = await handleRequest(jsonRpc, parsed, { socket: ws, context });
       if (result instanceof Response) {
         const responseData = result.getResponseData();
         if (typeof responseData === "object" && responseData?.jsonrpc === "2.0") {
@@ -86,7 +82,9 @@ export function runJsonRpcServer(
       }
       ws.send(JSON.stringify(result));
     });
-    ws.on("close", () => console.log("Client disconnected"));
+    ws.on("close", (code, reason) =>
+      console.log(`Client disconnected: ${code} - ${Buffer.isBuffer(reason) ? reason.toString("utf-8") : reason}`)
+    );
   });
   return app;
 }

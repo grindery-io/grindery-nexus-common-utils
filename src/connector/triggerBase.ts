@@ -4,11 +4,13 @@ import { ConnectorInput } from ".";
 
 function createStopper() {
   let resolve, reject;
-  const promise: Promise<unknown> & { stop?: () => void; error?: (e) => void } = new Promise((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  promise.stop = () => resolve();
+  const promise: Promise<unknown> & { stop?: (reason?: string) => void; error?: (e) => void } = new Promise(
+    (res, rej) => {
+      resolve = res;
+      reject = rej;
+    }
+  );
+  promise.stop = (reason?: string) => resolve(reason);
   promise.error = (e) => reject(e);
   return promise;
 }
@@ -26,12 +28,12 @@ export abstract class TriggerBase<T = unknown> extends EventEmitter {
   get isRunning() {
     return this.running;
   }
-  stop() {
+  stop(reason = "") {
     if (!this.running) {
       return;
     }
     this.running = false;
-    this.stopper.stop?.();
+    this.stopper.stop?.(reason);
   }
   interrupt(e) {
     this.stopper.error?.(e);
@@ -52,13 +54,15 @@ export abstract class TriggerBase<T = unknown> extends EventEmitter {
   start() {
     this.running = true;
     this.main()
+      .then((result) => {
+        this.running = false;
+        this.emit("stop", 1000, result ? String(result) : "Trigger stopped normally");
+      })
       .catch((e) => {
+        this.running = false;
+        this.emit("stop", 3001, String(e));
         console.error(e);
         Sentry.captureException(e);
-      })
-      .finally(() => {
-        this.running = false;
-        this.emit("stop");
       });
   }
   abstract main(): Promise<unknown>;

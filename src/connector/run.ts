@@ -73,19 +73,22 @@ export function runConnector({ actions, triggers, webhooks, inputProviders, opti
     const trigger = triggers[params.key];
     if (trigger) {
       const instance = typeof trigger === "object" ? await trigger.factory(params) : new trigger(params);
-      instance.on("stop", () => {
+      instance.on("stop", (code = 1000, reason = "Trigger stopped") => {
+        if (reason.length > 100) {
+          reason = reason.slice(0, 100) + "...";
+        }
         if (socket.readyState === socket.OPEN) {
-          socket.close();
+          socket.close(code, reason);
         }
       });
       instance.on("signal", (message) => {
         socket.send(JSON.stringify(message));
       });
       socket.on("close", () => {
-        instance.stop();
+        instance.stop("WebSocket closed");
       });
-      socket.on("error", () => {
-        instance.stop();
+      socket.on("error", (e) => {
+        instance.stop(String(e));
       });
       instance.start();
     } else {
