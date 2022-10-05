@@ -97,4 +97,7 @@ export class JsonRpcWebSocket extends EventEmitter {
   close(code = 1000, reason = "Called close function on JsonRpcWebSocket") {
     this.ws.close(code, reason);
   }
+  get isOpen() {
+    return ([WebSocket.CONNECTING, WebSocket.OPEN] as number[]).includes(this.ws.readyState);
+  }
 }
