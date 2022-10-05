@@ -1,11 +1,13 @@
+import { EventEmitter } from "node:events";
 import { JSONRPCServer, JSONRPCClient, JSONRPCServerAndClient, JSONRPCParams } from "json-rpc-2.0";
 import WebSocket from "ws";
 
-export class JsonRpcWebSocket {
+export class JsonRpcWebSocket extends EventEmitter {
   private serverAndClient: JSONRPCServerAndClient;
   private ws: WebSocket;
 
   constructor(url: string, private requestTimeout = 60000) {
+    super();
     this.ws = new WebSocket(url);
     this.serverAndClient = new JSONRPCServerAndClient(
       new JSONRPCServer(),
@@ -52,11 +54,15 @@ export class JsonRpcWebSocket {
     };
     this.ws.on("close", (code, reason) => {
       this.serverAndClient.rejectAllPendingRequests(`Connection is closed (${code} - ${reason?.toString("binary")}).`);
+      this.emit("close", code, reason);
+      this.removeAllListeners("close");
     });
     this.ws.on("error", (e) => {
       console.error("WebSocket error:", e);
-      this.ws.close();
+      this.ws.close(3003, "WebSocket error");
       this.serverAndClient.rejectAllPendingRequests(`Connection error: ${e.toString()}`);
+      this.emit("close", 3003, String(e));
+      this.removeAllListeners("close");
     });
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
