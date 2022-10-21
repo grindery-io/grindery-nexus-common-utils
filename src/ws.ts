@@ -90,10 +90,22 @@ export class JsonRpcWebSocket extends EventEmitter {
       }, 5000);
     };
     keepAlive();
+    let deadLineTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      console.warn(`JsonRpcWebSocket: Unexpected timeout with no return from library (method: ${method})`, {
+        method,
+        params,
+      });
+      this.serverAndClient.rejectAllPendingRequests("JsonRpcWebSocket: Unexpected timeout with no return from library");
+      this.close(3002, "JsonRpcWebSocket: Unexpected timeout with no return from library");
+    }, this.requestTimeout * 1.5);
     try {
       return await this.serverAndClient.timeout(this.requestTimeout).request(method, params, clientParams);
     } finally {
       running = false;
+      if (deadLineTimeout) {
+        clearTimeout(deadLineTimeout);
+        deadLineTimeout = null;
+      }
     }
   }
   close(code = 1000, reason = "Called close function on JsonRpcWebSocket") {
