@@ -1,4 +1,4 @@
-import { createHash, createPrivateKey, createPublicKey, KeyObject, webcrypto } from "node:crypto";
+import { createHash, createPrivateKey, createPublicKey, KeyObject, webcrypto, createHmac } from "node:crypto";
 import KeyEncoder from "@tradle/key-encoder";
 import * as jose from "jose";
 
@@ -31,6 +31,24 @@ const initKeys = async () => {
       ["encrypt", "decrypt", "wrapKey", "unwrapKey"]
     )
   );
+  const HMAC = KeyObject.from(
+    await webcrypto.subtle.deriveKey(
+      {
+        name: "PBKDF2",
+        iterations: 10,
+        salt: createHash("sha512").update("Grindery HMAC Key").digest().subarray(0, 16),
+        hash: "SHA-512",
+      },
+      rawKey,
+      {
+        name: "HMAC",
+        hash: "SHA-512",
+        length: 512,
+      },
+      false,
+      ["sign"]
+    )
+  );
   const keyEncoder = new KeyEncoder("p256");
   const pemKey = keyEncoder.encodePrivate(
     Buffer.from(
@@ -51,7 +69,7 @@ const initKeys = async () => {
   );
   const ECDSA_PRIVATE = createPrivateKey({ key: pemKey, format: "pem" });
   const ECDSA_PUBLIC = createPublicKey(ECDSA_PRIVATE);
-  return { AES, ECDSA_PRIVATE, ECDSA_PUBLIC };
+  return { AES, HMAC, ECDSA_PRIVATE, ECDSA_PUBLIC };
 };
 
 type RemoveIndex<T> = {
@@ -96,6 +114,10 @@ class JwtTools {
       algorithms: ["ES256"],
       ...options,
     });
+  hmac = async (data: string | Buffer) =>
+    createHmac("SHA512", (await this.keys).HMAC)
+      .update(data)
+      .digest();
   getPublicJwk = async () => jose.exportJWK((await this.keys).ECDSA_PUBLIC);
   typedCipher = <T = unknown>(audience: string) =>
     Object.freeze({
