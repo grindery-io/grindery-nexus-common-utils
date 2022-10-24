@@ -72,6 +72,9 @@ export class JsonRpcWebSocket extends EventEmitter {
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async request<T extends JSONRPCParams, U = unknown>(method: string, params?: T, clientParams?: any): Promise<U> {
+    if (!this.isOpen) {
+      throw new Error("WebSocket is not open");
+    }
     let running = true;
     const keepAlive = () => {
       if (!running) {
@@ -99,7 +102,16 @@ export class JsonRpcWebSocket extends EventEmitter {
       this.close(3002, "JsonRpcWebSocket: Unexpected timeout with no return from library");
     }, this.requestTimeout * 1.5);
     try {
-      return await this.serverAndClient.timeout(this.requestTimeout).request(method, params, clientParams);
+      const promise = this.serverAndClient.timeout(this.requestTimeout).request(method, params, clientParams);
+      const sentinel = {};
+      const result = await Promise.race([
+        promise,
+        new Promise((res) => setTimeout(() => res(sentinel), this.requestTimeout * 1.5)),
+      ]);
+      if (result === sentinel) {
+        throw new Error("Request timed out");
+      }
+      return result;
     } finally {
       running = false;
       if (deadLineTimeout) {
