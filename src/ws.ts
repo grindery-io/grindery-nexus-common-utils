@@ -70,6 +70,9 @@ export class JsonRpcWebSocket extends EventEmitter {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.serverAndClient.addMethod(name, method as any);
   }
+  onTimeout() {
+    this.serverAndClient.rejectAllPendingRequests("JsonRpcWebSocket: Unexpected timeout with no return from library");
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async request<T extends JSONRPCParams, U = unknown>(method: string, params?: T, clientParams?: any): Promise<U> {
     if (!this.isOpen) {
@@ -84,31 +87,38 @@ export class JsonRpcWebSocket extends EventEmitter {
         if (!running) {
           return;
         }
-        this.serverAndClient
-          .timeout(5000)
-          .request("ping")
-          .then(keepAlive, () => {
-            this.ws.close(3001, "Failed to ping server");
-          });
+        this.serverAndClient.request("ping").then(keepAlive, () => {
+          this.ws.close(3001, "Failed to ping server");
+        });
       }, 5000);
     };
     keepAlive();
     let deadLineTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      deadLineTimeout = null;
       console.warn(`JsonRpcWebSocket: Unexpected timeout with no return from library (method: ${method})`, {
         method,
         params,
       });
-      this.serverAndClient.rejectAllPendingRequests("JsonRpcWebSocket: Unexpected timeout with no return from library");
+      this.onTimeout();
       this.close(3002, "JsonRpcWebSocket: Unexpected timeout with no return from library");
     }, this.requestTimeout * 1.5);
     try {
-      const promise = this.serverAndClient.timeout(this.requestTimeout).request(method, params, clientParams);
+      const promise = this.serverAndClient.request(method, params, clientParams);
+      promise.then(
+        () => {
+          /* Empty */
+        },
+        () => {
+          /* Empty */
+        }
+      );
       const sentinel = {};
       const result = await Promise.race([
         promise,
-        new Promise((res) => setTimeout(() => res(sentinel), this.requestTimeout * 1.5)),
+        new Promise((res) => setTimeout(() => res(sentinel), this.requestTimeout)),
       ]);
       if (result === sentinel) {
+        this.onTimeout();
         throw new Error("Request timed out");
       }
       return result;
