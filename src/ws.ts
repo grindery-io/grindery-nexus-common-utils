@@ -12,10 +12,10 @@ export class JsonRpcWebSocket extends EventEmitter {
     this.serverAndClient = new JSONRPCServerAndClient(
       new JSONRPCServer(),
       new JSONRPCClient(async (request) => {
-        await new Promise((resolve, reject) => {
+        return await new Promise((resolve, reject) => {
           if (this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify(request));
-            return;
+            return resolve(undefined);
           }
           if (this.ws.readyState !== WebSocket.CONNECTING) {
             throw new Error("WebSocket is not open");
@@ -39,19 +39,19 @@ export class JsonRpcWebSocket extends EventEmitter {
         });
       })
     );
-    this.ws.onmessage = (event) => {
+    this.ws.on("message", (data) => {
       let msg;
       try {
-        msg = JSON.parse(event.data.toString());
+        msg = JSON.parse(Buffer.isBuffer(data) ? data.toString("utf-8") : data.toString());
       } catch (e) {
-        console.warn("Received invalid JSON message from WebSocket", e, { data: event.data });
+        console.warn("Received invalid JSON message from WebSocket", e, { data });
         if (this.ws.readyState === WebSocket.OPEN) {
           this.ws.send(JSON.stringify({ jsonrpc: "2.0", error: { code: -32700, message: "Parse error" }, id: null }));
         }
         return;
       }
-      this.serverAndClient.receiveAndSend(msg);
-    };
+      this.serverAndClient.receiveAndSend(msg).catch((e) => console.error("receiveAndSend error: ", e));
+    });
     this.ws.on("close", (code, reason) => {
       this.serverAndClient.rejectAllPendingRequests(`Connection is closed (${code} - ${reason?.toString("binary")}).`);
       this.emit("close", code, reason);
@@ -71,7 +71,7 @@ export class JsonRpcWebSocket extends EventEmitter {
     this.serverAndClient.addMethod(name, method as any);
   }
   onTimeout() {
-    this.serverAndClient.rejectAllPendingRequests("JsonRpcWebSocket: Timeout");
+    this.serverAndClient.rejectAllPendingRequests("JsonRpcWebSocket: Unexpected timeout");
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async request<T extends JSONRPCParams, U = unknown>(method: string, params?: T, clientParams?: any): Promise<U> {
@@ -79,36 +79,48 @@ export class JsonRpcWebSocket extends EventEmitter {
       throw new Error("WebSocket is not open");
     }
     let running = true;
+    let keepAliveTimer: ReturnType<typeof setTimeout> | null = null;
     const keepAlive = () => {
       if (!running) {
         return;
       }
-      setTimeout(() => {
+      keepAliveTimer = setTimeout(() => {
+        keepAliveTimer = null;
         if (!running) {
           return;
         }
-        this.serverAndClient.request("ping").then(keepAlive, () => {
-          this.ws.close(3001, "Failed to ping server");
-        });
+        this.serverAndClient
+          .timeout(5000)
+          .request("ping")
+          .then(keepAlive, () => {
+            if (!this.isOpen) {
+              return;
+            }
+            this.ws.close(3001, "Failed to ping server");
+          });
       }, 5000);
     };
     keepAlive();
-    let deadLineTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
-      deadLineTimeout = null;
-      console.warn(`JsonRpcWebSocket: Timeout (method: ${method})`, {
+    let deadLineTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      deadLineTimer = null;
+      console.warn(`JsonRpcWebSocket: Unexpected timeout (method: ${method})`, {
         method,
         params,
       });
       this.onTimeout();
-      this.close(3002, `JsonRpcWebSocket: Timeout (method: ${method})`);
-    }, this.requestTimeout);
+      this.close(3002, `JsonRpcWebSocket: Unexpected timeout (method: ${method})`);
+    }, this.requestTimeout * 1.5);
     try {
-      return await this.serverAndClient.request(method, params, clientParams);
+      return await this.serverAndClient.timeout(this.requestTimeout).request(method, params, clientParams);
     } finally {
       running = false;
-      if (deadLineTimeout) {
-        clearTimeout(deadLineTimeout);
-        deadLineTimeout = null;
+      if (deadLineTimer) {
+        clearTimeout(deadLineTimer);
+        deadLineTimer = null;
+      }
+      if (keepAliveTimer) {
+        clearTimeout(keepAliveTimer);
+        keepAliveTimer = null;
       }
     }
   }

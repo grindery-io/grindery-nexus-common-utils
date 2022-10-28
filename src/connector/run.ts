@@ -101,6 +101,6 @@ export function runConnector({ actions, triggers, webhooks, inputProviders, opti
   jsonRpcServer.addMethod("runAction", forceObject(runAction));
   jsonRpcServer.addMethod("callWebhook", forceObject(callWebhook));
   jsonRpcServer.addMethod("grinderyNexusConnectorUpdateFields", forceObject(inputProvider));
-  const app = runJsonRpcServer(jsonRpcServer, options);
-  return { jsonRpcServer, app };
+  const { app, server } = runJsonRpcServer(jsonRpcServer, options);
+  return { jsonRpcServer, app, server };
 }

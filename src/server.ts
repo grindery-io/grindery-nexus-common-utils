@@ -31,7 +31,7 @@ export function runJsonRpcServer(
   jsonRpc: JSONRPCServer<ServerParams>,
   { port, mutateRoutes, middlewares = [bodyParser.json()] }: RunJsonRpcServerOptions = {}
 ) {
-  port = parseInt(process.env.PORT || "", 10) || 3000;
+  port = port || parseInt(process.env.PORT || "", 10) || 3000;
   const app = express();
   for (const middleware of middlewares) {
     app.use(middleware);
@@ -86,5 +86,5 @@ export function runJsonRpcServer(
       console.log(`Client disconnected: ${code} - ${Buffer.isBuffer(reason) ? reason.toString("utf-8") : reason}`)
     );
   });
-  return app;
+  return { app, server };
 }
