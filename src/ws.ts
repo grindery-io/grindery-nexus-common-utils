@@ -71,7 +71,7 @@ export class JsonRpcWebSocket extends EventEmitter {
     this.serverAndClient.addMethod(name, method as any);
   }
   onTimeout() {
-    this.serverAndClient.rejectAllPendingRequests("JsonRpcWebSocket: Unexpected timeout with no return from library");
+    this.serverAndClient.rejectAllPendingRequests("JsonRpcWebSocket: Timeout");
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async request<T extends JSONRPCParams, U = unknown>(method: string, params?: T, clientParams?: any): Promise<U> {
@@ -95,33 +95,15 @@ export class JsonRpcWebSocket extends EventEmitter {
     keepAlive();
     let deadLineTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
       deadLineTimeout = null;
-      console.warn(`JsonRpcWebSocket: Unexpected timeout with no return from library (method: ${method})`, {
+      console.warn(`JsonRpcWebSocket: Timeout (method: ${method})`, {
         method,
         params,
       });
       this.onTimeout();
-      this.close(3002, "JsonRpcWebSocket: Unexpected timeout with no return from library");
-    }, this.requestTimeout * 1.5);
+      this.close(3002, `JsonRpcWebSocket: Timeout (method: ${method})`);
+    }, this.requestTimeout);
     try {
-      const promise = this.serverAndClient.request(method, params, clientParams);
-      promise.then(
-        () => {
-          /* Empty */
-        },
-        () => {
-          /* Empty */
-        }
-      );
-      const sentinel = {};
-      const result = await Promise.race([
-        promise,
-        new Promise((res) => setTimeout(() => res(sentinel), this.requestTimeout)),
-      ]);
-      if (result === sentinel) {
-        this.onTimeout();
-        throw new Error("Request timed out");
-      }
-      return result;
+      return await this.serverAndClient.request(method, params, clientParams);
     } finally {
       running = false;
       if (deadLineTimeout) {
