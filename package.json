@@ -1,6 +1,6 @@
 {
   "name": "grindery-nexus-common-utils",
-  "version": "1.0.47",
+  "version": "1.0.48",
   "description": "Common functions and type definitions for Grindery Nexus",
   "main": "dist/index.js",
   "scripts": {

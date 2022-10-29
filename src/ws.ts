@@ -83,6 +83,9 @@ export class JsonRpcWebSocket extends EventEmitter {
       if (!running) {
         return;
       }
+      if (method === "ping") {
+        return;
+      }
       keepAliveTimer = setTimeout(() => {
         keepAliveTimer = null;
         if (!running) {
