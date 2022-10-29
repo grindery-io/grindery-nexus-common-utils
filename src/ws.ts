@@ -12,30 +12,29 @@ export class JsonRpcWebSocket extends EventEmitter {
     this.serverAndClient = new JSONRPCServerAndClient(
       new JSONRPCServer(),
       new JSONRPCClient(async (request) => {
-        return await new Promise((resolve, reject) => {
-          if (this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify(request));
-            return resolve(undefined);
+        const data = JSON.stringify(request);
+        if (this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(data);
+          return;
+        }
+        if (this.ws.readyState !== WebSocket.CONNECTING) {
+          throw new Error("WebSocket is not open");
+        }
+        // Do not wait for result here, otherwise the builtin timeout mechanism doesn't work
+        const onError = (e) => {
+          this.close(3005, e?.toString() || "Failed to send request to WebSocket due to WebSocket error");
+        };
+        this.ws.on("error", onError);
+        this.ws.on("close", onError);
+        this.ws.once("open", () => {
+          this.ws.off("error", onError);
+          this.ws.off("close", onError);
+          try {
+            this.ws.send(data);
+          } catch (error) {
+            this.close(3006, error?.toString() || "Failed to send request to WebSocket");
+            return;
           }
-          if (this.ws.readyState !== WebSocket.CONNECTING) {
-            throw new Error("WebSocket is not open");
-          }
-          const onError = function (e) {
-            reject(e || new Error("Failed to send request to WebSocket"));
-          };
-          this.ws.on("error", onError);
-          this.ws.on("close", onError);
-          this.ws.once("open", () => {
-            this.ws.off("error", onError);
-            this.ws.off("close", onError);
-            try {
-              this.ws.send(JSON.stringify(request));
-            } catch (error) {
-              reject(error);
-              return;
-            }
-            resolve(undefined);
-          });
         });
       })
     );
