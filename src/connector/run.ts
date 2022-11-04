@@ -13,7 +13,10 @@ import {
 
 type Action = (params: ConnectorInput<unknown>) => Promise<ActionOutput>;
 
-type WebhookHandler = (params: ConnectorInput<WebhookParams>) => Promise<ActionOutput>;
+export type WebhookOutput = ActionOutput &
+  ({ returnUnwrapped?: undefined | false } | { returnUnwrapped: true; statusCode?: number; contentType?: string });
+
+type WebhookHandler = (params: ConnectorInput<WebhookParams>) => Promise<WebhookOutput>;
 
 type InputProvider = (params: InputProviderInput) => Promise<InputProviderOutput>;
 
