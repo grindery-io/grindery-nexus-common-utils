@@ -5,7 +5,7 @@ type WebSocketPayloadCommon = {
   sessionId: string;
 };
 export type ConnectorInput<T = unknown> = WebSocketPayloadCommon & {
-  credentials: unknown;
+  authentication?: string;
   fields: T;
 };
 export type ConnectorOutput = WebSocketPayloadCommon & {
@@ -14,7 +14,7 @@ export type ConnectorOutput = WebSocketPayloadCommon & {
 
 export type InputProviderInput<T = unknown> = {
   key: string;
-  credentials: unknown;
+  authentication?: string;
   fieldData: T;
 };
 export type InputProviderOutput = {
