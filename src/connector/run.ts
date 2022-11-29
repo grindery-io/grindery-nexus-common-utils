@@ -37,17 +37,17 @@ export type ConnectorDefinition = {
 };
 export function runConnector({ actions, triggers, webhooks, inputProviders, options }: ConnectorDefinition) {
   const jsonRpcServer = createJsonRpcServer();
-
   async function runAction(params: ConnectorInput): Promise<ConnectorOutput> {
-    if (params.key in actions) {
-      let result = await actions[params.key](params);
+    let paramskeytmp = params.key.split(":")[0];
+    if (paramskeytmp in actions) {
+      let result = await actions[paramskeytmp](params);
       if (!("payload" in result)) {
-        console.warn(`Action ${params.key} returned result in incorrect format, wrapping it`);
+        console.warn(`Action ${paramskeytmp} returned result in incorrect format, wrapping it`);
         result = { payload: result };
       }
       return { ...result, key: params.key, sessionId: params.sessionId };
     } else {
-      throw new Error(`Invalid action: ${params.key}`);
+      throw new Error(`Invalid action: ${paramskeytmp}`);
     }
   }
   async function callWebhook(params: ConnectorInput<WebhookParams>): Promise<ConnectorOutput> {

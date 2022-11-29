@@ -80,7 +80,12 @@ export function runJsonRpcServer(
           return;
         }
       }
-      ws.send(JSON.stringify(result));
+      ws.send(
+        JSON.stringify(
+          result,
+          (key, value) => (typeof value === "bigint" ? value.toString() : value) // return everything else unchanged
+        )
+      );
     });
     ws.on("close", (code, reason) =>
       console.log(`Client disconnected: ${code} - ${Buffer.isBuffer(reason) ? reason.toString("utf-8") : reason}`)
