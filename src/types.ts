@@ -90,7 +90,18 @@ export type FieldSchema = {
   key: string; // A unique machine readable key for this value (e.g "name").
   label?: string; // A human readable label for this value (e.g "Name").
   helpText?: string; // A human readable description of this value (e.g "Your full name.").
-  type?: "string" | "text" | "integer" | "number" | "boolean" | "datetime" | "file" | "password" | "copy" | "code"; // The type of this value. Use `string` for basic text input, `text` for a large, `<textarea>` style box, and `code` for a `<textarea>` with a fixed-width (monospaced) font.
+  type?:
+    | "string"
+    | "text"
+    | "integer"
+    | "number"
+    | "boolean"
+    | "datetime"
+    | "file"
+    | "password"
+    | "copy"
+    | "code"
+    | "address"; // The type of this value. Use `string` for basic text input, `text` for a large, `<textarea>` style box, and `code` for a `<textarea>` with a fixed-width (monospaced) font.
   required?: boolean; // If this value is required or not.
   placeholder?: string; // An example value that is not saved.
   default?: string; // A default value that is saved if no value is provided by the user.

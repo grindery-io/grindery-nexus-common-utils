@@ -19,6 +19,8 @@ export type InputProviderInput<T = unknown> = {
 };
 export type InputProviderOutput = {
   inputFields: FieldSchema[];
+  outputFields?: FieldSchema[];
+  sample?: Record<string, unknown>;
 };
 
 export type ActionOutput = Pick<ConnectorOutput, "payload">;
