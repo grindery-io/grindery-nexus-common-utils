@@ -1390,8 +1390,8 @@ outgoing headers. The header name is case-insensitive.</p>
 <div class="tsd-comment tsd-typography"><p>Set Link header field with the given <code>links</code>.</p>
 <p>Examples:</p>
 <p>   res.links({
-     next: &#39;<a href="http://api.example.com/users?page=2&#39;">http://api.example.com/users?page=2&#39;</a>,
-     last: &#39;<a href="http://api.example.com/users?page=5&#39;">http://api.example.com/users?page=5&#39;</a>
+     next: &#39;<a href="http://api.example.com/users?page=2">http://api.example.com/users?page=2</a>&#39;,
+     last: &#39;<a href="http://api.example.com/users?page=5">http://api.example.com/users?page=5</a>&#39;
    });</p>
 </div>
 <div class="tsd-parameters">
@@ -1453,7 +1453,7 @@ example by default express supports &quot;back&quot; which redirects
 to the <em>Referrer</em> or <em>Referer</em> headers or &quot;/&quot;.</p>
 <p>Examples:</p>
 <p>   res.location(&#39;/foo/bar&#39;).;
-   res.location(&#39;<a href="http://example.com&#39;">http://example.com&#39;</a>);
+   res.location(&#39;<a href="http://example.com">http://example.com</a>&#39;);
    res.location(&#39;../login&#39;); // /blog/post/1 -&gt; /blog/login</p>
 <p>Mounting:</p>
 <p>  When an application is mounted and <code>res.location()</code>
@@ -2247,9 +2247,9 @@ it will play nicely with mounted apps, relative paths,
 <p>Examples:</p>
 <p>   res.redirect(&#39;back&#39;);
    res.redirect(&#39;/foo/bar&#39;);
-   res.redirect(&#39;<a href="http://example.com&#39;">http://example.com&#39;</a>);
-   res.redirect(301, &#39;<a href="http://example.com&#39;">http://example.com&#39;</a>);
-   res.redirect(&#39;<a href="http://example.com&#39;">http://example.com&#39;</a>, 301);
+   res.redirect(&#39;<a href="http://example.com">http://example.com</a>&#39;);
+   res.redirect(301, &#39;<a href="http://example.com">http://example.com</a>&#39;);
+   res.redirect(&#39;<a href="http://example.com">http://example.com</a>&#39;, 301);
    res.redirect(&#39;../login&#39;); // /blog/post/1 -&gt; /blog/login</p>
 </div>
 <div class="tsd-parameters">
