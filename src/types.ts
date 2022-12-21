@@ -136,6 +136,7 @@ export type PollingOperationSchema = {
   inputFieldProviderUrl?: string; // A [JSON-RPC 2.0](https://www.jsonrpc.org/specification) endpoint for updating available input fields based on user input. If present, it is called after user changes a field (see `updateFieldDefinition` in [FieldSchema](#fieldschema) for details) to update available fields or choices. See also [FieldProviderRequestSchema](#fieldproviderrequestschema) and [FieldProviderResponseSchema](#fieldproviderresponseschema) for definition of the endpoint.
   outputFields?: FieldSchema[]; // The data fields returned by this trigger.
   sample: object; // Sample output data.
+  requiresUserToken?: boolean; // If set to true, orchestrator will add `userToken` to input of the trigger/action.
 };
 export type TriggerSchema = {
   key: string; // A key to uniquely identify this trigger.
@@ -150,6 +151,7 @@ export type APICallOperationSchema = {
   inputFieldProviderUrl?: string; // A [JSON-RPC 2.0](https://www.jsonrpc.org/specification) endpoint for updating available input fields based on user input. If present, it is called after user changes a field (see `updateFieldDefinition` in [FieldSchema](#fieldschema) for details) to update available fields or choices. See also [FieldProviderRequestSchema](#fieldproviderrequestschema) and [FieldProviderResponseSchema](#fieldproviderresponseschema) for definition of the endpoint.
   outputFields?: FieldSchema[]; // The data fields returned by this trigger.
   sample: object; // Sample output data.
+  requiresUserToken?: boolean; // If set to true, orchestrator will add `userToken` to input of the trigger/action.
 };
 export type ChainCallOperationSchema = {
   type: "blockchain:call"; // Must be set to `blockchain:call`.

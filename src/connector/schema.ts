@@ -46,6 +46,7 @@ const DEFAULT_SCHEMAS: { [key: string]: ConnectorSchema | Promise<ConnectorSchem
           ],
           outputFields: [],
           sample: {},
+          requiresUserToken: true,
         },
       },
       {
@@ -86,6 +87,7 @@ const DEFAULT_SCHEMAS: { [key: string]: ConnectorSchema | Promise<ConnectorSchem
           ],
           outputFields: [],
           sample: {},
+          requiresUserToken: true,
         },
       },
     ],
@@ -140,6 +142,7 @@ const DEFAULT_SCHEMAS: { [key: string]: ConnectorSchema | Promise<ConnectorSchem
           ],
           outputFields: [],
           sample: {},
+          requiresUserToken: true,
         },
       },
     ],
