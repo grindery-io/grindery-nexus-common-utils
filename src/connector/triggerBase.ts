@@ -17,6 +17,7 @@ function createStopper() {
 
 export abstract class TriggerBase<T = unknown> extends EventEmitter {
   protected sessionId = "";
+  protected key = "";
   private running = false;
   protected fields: T;
   private stopper = createStopper();
@@ -24,6 +25,7 @@ export abstract class TriggerBase<T = unknown> extends EventEmitter {
     super();
     this.fields = input.fields as T;
     this.sessionId = input.sessionId;
+    this.key = input.key;
   }
   get isRunning() {
     return this.running;
