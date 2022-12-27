@@ -51,11 +51,13 @@ export class JsonRpcWebSocket extends EventEmitter {
       }
       this.serverAndClient.receiveAndSend(msg).catch((e) => console.error("receiveAndSend error: ", e));
     });
-    this.ws.on("close", (code, reason) => {
+    const handleClose = (code: number, reason?: Buffer) => {
+      this.ws.off("close", handleClose);
       this.serverAndClient.rejectAllPendingRequests(`Connection is closed (${code} - ${reason?.toString("binary")}).`);
       this.emit("close", code, reason);
       this.removeAllListeners("close");
-    });
+    };
+    this.ws.on("close", handleClose);
     this.ws.on("error", (e) => {
       console.error("WebSocket error:", e);
       this.ws.close(3003, "WebSocket error");

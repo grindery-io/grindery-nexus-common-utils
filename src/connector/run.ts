@@ -1,5 +1,5 @@
-import WebSocket from "ws";
 import { createJsonRpcServer, forceObject } from "../jsonrpc";
+import { IJsonRpcConnection } from "../jsonrpc/connection";
 import { runJsonRpcServer, RunJsonRpcServerOptions } from "../server";
 import { TriggerBase } from "./triggerBase";
 import {
@@ -66,11 +66,11 @@ export function runConnector({ actions, triggers, webhooks, inputProviders, opti
     const result = await handler(params);
     return result;
   }
-  async function setupSignal(params: ConnectorInput, { socket }: { socket?: WebSocket }) {
-    if (!socket) {
+  async function setupSignal(params: ConnectorInput, { connection }: { connection?: IJsonRpcConnection }) {
+    if (!connection) {
       throw new Error("This method is only callable via WebSocket");
     }
-    if (socket.readyState !== socket.OPEN) {
+    if (!connection.isOpen()) {
       throw new Error("Socket is not open");
     }
     const trigger = triggers[params.key];
@@ -80,17 +80,17 @@ export function runConnector({ actions, triggers, webhooks, inputProviders, opti
         if (reason.length > 100) {
           reason = reason.slice(0, 100) + "...";
         }
-        if (socket.readyState === socket.OPEN) {
-          socket.close(code, reason);
+        if (connection.isOpen()) {
+          connection.close(code, reason);
         }
       });
       instance.on("signal", (message) => {
-        socket.send(JSON.stringify(message));
+        connection.send(message);
       });
-      socket.on("close", () => {
+      connection.on("close", () => {
         instance.stop("WebSocket closed");
       });
-      socket.on("error", (e) => {
+      connection.on("error", (e) => {
         instance.stop(String(e));
       });
       instance.start();

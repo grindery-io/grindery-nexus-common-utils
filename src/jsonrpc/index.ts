@@ -6,8 +6,10 @@ import {
   SimpleJSONRPCMethod,
 } from "json-rpc-2.0";
 import * as Sentry from "@sentry/node";
-import WebSocket from "ws";
-import { Request } from "express";
+import { ServerParams } from "./types";
+
+export * from "./connection";
+export * from "./types";
 
 export class InvalidParamsError extends Error {
   constructor(message?: string) {
@@ -31,11 +33,6 @@ const exceptionMiddleware = async (next, request, serverParams) => {
       throw error;
     }
   }
-};
-export type ServerParams<TContext extends Record<string, unknown> = Record<string, unknown>> = {
-  req?: Request;
-  socket?: WebSocket;
-  context: Partial<TContext>;
 };
 export function forceObject<T extends { [key: string]: unknown }, TContext extends Record<string, unknown>>(
   func: (params: T, extra: ServerParams<TContext>) => Promise<unknown>
