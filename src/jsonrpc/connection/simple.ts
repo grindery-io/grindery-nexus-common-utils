@@ -1,18 +1,8 @@
 import { JSONRPCRequest, JSONRPCResponse } from "json-rpc-2.0";
 import WebSocket from "ws";
 import EventEmitter from "node:events";
+import { IJsonRpcConnection } from "./types";
 
-export interface IJsonRpcConnection {
-  send(obj: JSONRPCRequest | JSONRPCResponse): void;
-  close(code?: number, data?: string): void;
-  isOpen(): boolean;
-
-  on(event: "close", listener: (code: number, reason: Buffer) => void): void;
-  on(event: "error", listener: (err: Error) => void): void;
-
-  off(event: "close", listener: (code: number, reason: Buffer) => void): void;
-  off(event: "error", listener: (err: Error) => void): void;
-}
 export class SimpleJsonRpcConnection extends EventEmitter implements IJsonRpcConnection {
   constructor(private ws: WebSocket) {
     super();
