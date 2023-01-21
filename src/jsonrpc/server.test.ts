@@ -35,7 +35,7 @@ describe("JsonRpcServer", () => {
         id: Date.now(),
       })
     );
-    await new Promise((res) => setTimeout(res, 10));
+    await new Promise((res) => socket.once("message", res));
     expect(responses.length).toBe(1);
     expect(calls.length).toBe(1);
     expect(responses[responses.length - 1].result).toBe(calls[calls.length - 1][0]);
@@ -47,7 +47,7 @@ describe("JsonRpcServer", () => {
         id: Date.now(),
       })
     );
-    await new Promise((res) => setTimeout(res, 10));
+    await new Promise((res) => socket.once("message", res));
     expect(responses.length).toBe(2);
     expect(calls.length).toBe(2);
     expect(calls[0]).toEqual(calls[1]);
@@ -81,7 +81,7 @@ describe("JsonRpcServer", () => {
         connectionId: "conn-1",
       })
     );
-    await new Promise((res) => setTimeout(res, 10));
+    await new Promise((res) => socket.once("message", res));
     expect(responses.length).toBe(1);
     expect(calls.length).toBe(1);
     expect(responses[responses.length - 1].result).toBe(calls[calls.length - 1][0]);
@@ -95,7 +95,7 @@ describe("JsonRpcServer", () => {
         connectionId: "conn-2",
       })
     );
-    await new Promise((res) => setTimeout(res, 10));
+    await new Promise((res) => socket.once("message", res));
     expect(responses.length).toBe(2);
     expect(calls.length).toBe(2);
     expect(responses[responses.length - 1].result).toBe(calls[calls.length - 1][0]);
@@ -103,7 +103,7 @@ describe("JsonRpcServer", () => {
     expect(calls[0][1]).not.toBe(calls[1][1]);
 
     calls[0][1].close();
-    await new Promise((res) => setTimeout(res, 10));
+    await new Promise((res) => socket.once("message", res));
     expect(responses.length).toBe(3);
     socket.send(
       JSON.stringify({
@@ -114,7 +114,7 @@ describe("JsonRpcServer", () => {
         connectionId: "conn-1",
       })
     );
-    await new Promise((res) => setTimeout(res, 10));
+    await new Promise((res) => socket.once("message", res));
     expect(calls.length).toBe(2);
     expect(responses.length).toBe(4);
     expect(responses[responses.length - 1].error).toBeTruthy();
@@ -129,7 +129,7 @@ describe("JsonRpcServer", () => {
         connectionId: "conn-2",
       })
     );
-    await new Promise((res) => setTimeout(res, 10));
+    await new Promise((res) => socket.once("message", res));
     expect(calls.length).toBe(3);
     expect(responses.length).toBe(5);
     expect(responses[responses.length - 1].result).toBeTruthy();
@@ -144,7 +144,7 @@ describe("JsonRpcServer", () => {
         connectionId: "conn-3",
       })
     );
-    await new Promise((res) => setTimeout(res, 10));
+    await new Promise((res) => socket.once("message", res));
     expect(calls.length).toBe(4);
     expect(responses.length).toBe(6);
     expect(responses[responses.length - 1].result).toBeTruthy();
@@ -157,7 +157,7 @@ describe("JsonRpcServer", () => {
         connectionId: "conn-2",
       })
     );
-    await new Promise((res) => setTimeout(res, 10));
+    await new Promise((res) => socket.once("message", res));
     expect(calls.length).toBe(4);
     expect(responses.length).toBe(7);
 
@@ -170,7 +170,7 @@ describe("JsonRpcServer", () => {
         connectionId: "conn-2",
       })
     );
-    await new Promise((res) => setTimeout(res, 10));
+    await new Promise((res) => socket.once("message", res));
     expect(calls.length).toBe(4);
     expect(responses.length).toBe(8);
     expect(responses[responses.length - 1].error).toBeTruthy();
