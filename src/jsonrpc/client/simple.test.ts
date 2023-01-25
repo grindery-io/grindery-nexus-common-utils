@@ -1,7 +1,7 @@
 import { describe, test, jest, beforeEach } from "@jest/globals";
-import { createJsonRpcServer } from "./jsonrpc";
-import { runJsonRpcServer } from "./server";
-import { JsonRpcWebSocket } from "./ws";
+import { createJsonRpcServer } from "..";
+import { runJsonRpcServer } from "../server";
+import { JsonRpcWebSocket } from ".";
 
 describe("JsonRpcWebSocket", () => {
   beforeEach(() => {

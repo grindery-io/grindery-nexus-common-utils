@@ -5,7 +5,8 @@ import { Server } from "ws";
 import { Response } from "../utils";
 import { JSONRPCRequest, JSONRPCResponse, JSONRPCServer } from "json-rpc-2.0";
 import { ServerParams } from "./types";
-import { IJsonRpcConnection, MuxedChildConnection, SimpleJsonRpcConnection, WithConnectionId } from "./connection";
+import { MuxedChildConnection, SimpleJsonRpcConnection, WithConnectionId } from "./connection";
+import { createConnectionManager } from "./connection/manager";
 
 async function handleRequest(server: JSONRPCServer<ServerParams>, body, extra: ServerParams) {
   const result = await server.receive(body, extra);
@@ -66,9 +67,7 @@ export function runJsonRpcServer(
     console.log("Client connected");
     const context = {};
     const parent = new SimpleJsonRpcConnection(ws);
-    const children = new Map<string, IJsonRpcConnection>();
-    const closedConnectionIds = new Set<string>();
-    children.set("", new MuxedChildConnection(parent, ""));
+    const manager = createConnectionManager((id) => new MuxedChildConnection(parent, id));
     ws.on("message", async function message(data) {
       let parsed = {} as (JSONRPCRequest | JSONRPCResponse) & WithConnectionId;
       try {
@@ -82,72 +81,14 @@ export function runJsonRpcServer(
           JSON.stringify({ jsonrpc: "2.0", error: { code: -32600, message: "Invalid Request" }, id: null })
         );
       }
-      const connectionId = parsed?.connectionId || "";
-
-      let conn = children.get(connectionId);
-      if ("method" in parsed && parsed.method === "_grinderyNexusCloseConnection") {
-        if (!connectionId) {
-          return ws.send(
-            JSON.stringify({
-              jsonrpc: "2.0",
-              error: { code: -32000, message: "Can't close default connection" },
-              id: parsed?.id,
-              connectionId,
-            } as JSONRPCResponse & WithConnectionId)
-          );
-        }
-        if (conn) {
-          const params = parsed.params as { code?: number; reason?: string };
-          conn.close(
-            parseInt(params?.code?.toString() || "", 10) || 3000,
-            params?.reason?.toString() || "Remote closed connection"
-          );
-          children.delete(connectionId);
-          closedConnectionIds.add(connectionId);
-        }
-        if (!parsed?.id) {
-          return;
-        }
-        return ws.send(
-          JSON.stringify({
-            jsonrpc: "2.0",
-            result: true,
-            id: parsed?.id,
-            connectionId,
-          } as JSONRPCResponse & WithConnectionId)
-        );
+      const connResult = manager.getConnectionForMessage(parsed);
+      if (!connResult) {
+        return;
       }
-      if (!conn) {
-        if ("method" in parsed) {
-          if (closedConnectionIds.has(connectionId)) {
-            console.warn(`[${connectionId}] Calling ${parsed?.method} on closed connection`, { parsed });
-            if (!parsed.id) {
-              return;
-            }
-            return ws.send(
-              JSON.stringify({
-                jsonrpc: "2.0",
-                error: { code: -32000, message: "Called method on a closed connection" },
-                id: parsed?.id,
-                connectionId,
-              } as JSONRPCResponse & WithConnectionId)
-            );
-          } else {
-            conn = new MuxedChildConnection(parent, connectionId);
-            conn.once("close", () => {
-              children.delete(connectionId);
-              closedConnectionIds.add(connectionId);
-            });
-            children.set(connectionId, conn);
-            console.log(`[${connectionId}] New child connection created from method ${parsed?.method}`);
-          }
-        } else {
-          // Response
-          if (!closedConnectionIds.has(connectionId)) {
-            console.warn(`[${connectionId}] Received response from unknown connection`, { parsed });
-          }
-        }
+      if ("jsonrpc" in connResult) {
+        return ws.send(JSON.stringify(connResult));
       }
+      const [conn, connectionId] = connResult;
       delete parsed?.connectionId;
       let result: unknown = await handleRequest(jsonRpc, parsed, { connection: conn, context });
       if (result instanceof Response) {
