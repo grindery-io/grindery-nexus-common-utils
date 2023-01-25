@@ -6,8 +6,8 @@ export class MuxedChildConnection extends EventEmitter implements IJsonRpcConnec
   private closed = false;
   constructor(private parent: IJsonRpcConnection, private connectionId: string) {
     super();
-    parent.once("close", this.handleClose);
-    parent.once("error", this.handleError);
+    parent.once("close", this.handleClose.bind(this));
+    parent.once("error", this.handleError.bind(this));
   }
   isOpen(): boolean {
     return !this.closed && this.parent.isOpen();

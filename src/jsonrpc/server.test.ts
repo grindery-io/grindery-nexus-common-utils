@@ -6,12 +6,14 @@ import { runJsonRpcServer } from "./server";
 
 describe("JsonRpcServer", () => {
   beforeEach(() => {
+    /*
     jest.spyOn(console, "log").mockImplementation(() => {
-      /* Nothing */
+      // Nothing
     });
     jest.spyOn(console, "warn").mockImplementation(() => {
-      /* Nothing */
+      // Nothing
     });
+    */
   });
   test("standard", async () => {
     const calls = [] as [unknown, unknown][];
@@ -177,6 +179,69 @@ describe("JsonRpcServer", () => {
     expect(responses[responses.length - 1].connectionId).toBe("conn-2");
 
     socket.close();
+    server.close();
+    server.unref();
+    await new Promise((res) => setTimeout(res, 100));
+  });
+  test("close", async () => {
+    const calls = [] as [unknown, IJsonRpcConnection][];
+    const jr = createJsonRpcServer();
+    jr.addMethod("test", (params, { connection } = { context: {} }) => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      calls.push([params, connection!]);
+      return params;
+    });
+    const { server } = runJsonRpcServer(jr, { port: 34568 });
+    await new Promise((res) => setTimeout(res, 10));
+    const socket = new WebSocket("ws://127.0.0.1:34568");
+
+    const responses = [] as (JSONRPCResponse & WithConnectionId)[];
+    socket.on("message", (data) => responses.push(JSON.parse(data.toString())));
+    await new Promise((res) => setTimeout(res, 10));
+    socket.send(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        method: "test",
+        params: true,
+        id: Date.now(),
+        connectionId: "conn-1",
+      })
+    );
+    await new Promise((res) => socket.once("message", res));
+    expect(responses.length).toBe(1);
+    expect(calls.length).toBe(1);
+    expect(responses[responses.length - 1].result).toBe(calls[calls.length - 1][0]);
+    expect(responses[responses.length - 1].connectionId).toBe("conn-1");
+    socket.send(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        method: "test",
+        params: true,
+        id: Date.now(),
+        connectionId: "conn-2",
+      })
+    );
+    await new Promise((res) => socket.once("message", res));
+    expect(responses.length).toBe(2);
+    expect(calls.length).toBe(2);
+    expect(responses[responses.length - 1].result).toBe(calls[calls.length - 1][0]);
+    expect(responses[responses.length - 1].connectionId).toBe("conn-2");
+    expect(calls[0][1]).not.toBe(calls[1][1]);
+
+    const closeEventConn1 = jest.fn();
+    calls[0][1].on("close", closeEventConn1);
+    const closeEventConn2 = jest.fn();
+    calls[1][1].on("close", closeEventConn2);
+    const closeEventParent = jest.fn();
+    socket.on("close", closeEventParent);
+
+    socket.close();
+    await new Promise((res) => setTimeout(res, 100));
+
+    expect(closeEventParent).toBeCalled();
+    expect(closeEventConn1).toBeCalled();
+    expect(closeEventConn2).toBeCalled();
+
     server.close();
     server.unref();
     await new Promise((res) => setTimeout(res, 100));

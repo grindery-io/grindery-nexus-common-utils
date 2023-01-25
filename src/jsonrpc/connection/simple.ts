@@ -7,8 +7,8 @@ import { wsSendMessage } from "../utils";
 export class SimpleJsonRpcConnection extends EventEmitter implements IJsonRpcConnection {
   constructor(private ws: WebSocket) {
     super();
-    ws.once("close", this.handleClose);
-    ws.once("error", this.handleError);
+    ws.once("close", this.handleClose.bind(this));
+    ws.once("error", this.handleError.bind(this));
   }
   isOpen(): boolean {
     return this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN;
