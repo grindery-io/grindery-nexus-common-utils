@@ -27,11 +27,12 @@ export type RunJsonRpcServerOptions = {
   port?: number;
   mutateRoutes?: (app: ReturnType<typeof express>) => void;
   middlewares?: express.RequestHandler[];
+  disableMuxing?: boolean;
 };
 
 export function runJsonRpcServer(
   jsonRpc: JSONRPCServer<ServerParams>,
-  { port, mutateRoutes, middlewares = [bodyParser.json()] }: RunJsonRpcServerOptions = {}
+  { port, mutateRoutes, middlewares = [bodyParser.json()], disableMuxing }: RunJsonRpcServerOptions = {}
 ) {
   port = port || parseInt(process.env.PORT || "", 10) || 3000;
   const app = express();
@@ -81,6 +82,9 @@ export function runJsonRpcServer(
           JSON.stringify({ jsonrpc: "2.0", error: { code: -32600, message: "Invalid Request" }, id: null })
         );
       }
+      if (disableMuxing) {
+        delete parsed?.connectionId;
+      }
       const connResult = manager.getConnectionForMessage(parsed);
       if (!connResult) {
         return;
@@ -99,7 +103,9 @@ export function runJsonRpcServer(
           return;
         }
       }
-      (result as WithConnectionId).connectionId = connectionId;
+      if (!disableMuxing) {
+        (result as WithConnectionId).connectionId = connectionId;
+      }
       ws.send(JSON.stringify(result));
     });
     ws.on("close", (code, reason) =>

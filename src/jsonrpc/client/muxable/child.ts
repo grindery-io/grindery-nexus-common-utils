@@ -32,7 +32,7 @@ export class JsonRpcWebSocketClientConnection extends MuxedChildConnection {
     this.serverAndClient.addMethod(name, method as any);
   }
   async request<T extends JSONRPCParams, U = unknown>(method: string, params?: T): Promise<U> {
-    if (!this.isOpen()) {
+    if (!this.isOpen) {
       throw new Error("WebSocket is not open");
     }
     let deadLineTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {

@@ -4,16 +4,16 @@ import { IJsonRpcConnection, WithConnectionId } from "./types";
 
 export class MuxedChildConnection extends EventEmitter implements IJsonRpcConnection {
   private closed = false;
-  constructor(private parent: IJsonRpcConnection, private connectionId: string) {
+  constructor(private parent: IJsonRpcConnection, public readonly connectionId: string) {
     super();
     parent.once("close", this.handleClose.bind(this));
     parent.once("error", this.handleError.bind(this));
   }
-  isOpen(): boolean {
-    return !this.closed && this.parent.isOpen();
+  get isOpen(): boolean {
+    return !this.closed && this.parent.isOpen;
   }
   send(obj: JSONRPCRequest | JSONRPCResponse): void {
-    if (!this.isOpen()) {
+    if (!this.isOpen) {
       throw new Error("Can't send message on a closed connection");
     }
     this.parent.send({ ...obj, connectionId: this.connectionId } as (JSONRPCRequest | JSONRPCResponse) &
@@ -30,7 +30,7 @@ export class MuxedChildConnection extends EventEmitter implements IJsonRpcConnec
       return;
     }
     this.closed = true;
-    if (this.parent.isOpen()) {
+    if (this.parent.isOpen) {
       this.parent.send({
         jsonrpc: "2.0",
         method: "_grinderyNexusCloseConnection",

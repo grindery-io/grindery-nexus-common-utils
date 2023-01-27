@@ -15,6 +15,9 @@ export function createConnectionManager<T extends Closable>(
   children.set("", createChildConnection(""));
 
   return {
+    getNumChildren() {
+      return children.size - 1;
+    },
     getDefaultConnection(): T {
       return children.get("") as T;
     },

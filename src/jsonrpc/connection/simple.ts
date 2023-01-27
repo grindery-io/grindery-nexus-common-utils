@@ -10,7 +10,7 @@ export class SimpleJsonRpcConnection extends EventEmitter implements IJsonRpcCon
     ws.once("close", this.handleClose.bind(this));
     ws.once("error", this.handleError.bind(this));
   }
-  isOpen(): boolean {
+  get isOpen(): boolean {
     return this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN;
   }
   send(obj: JSONRPCRequest | JSONRPCResponse): void {

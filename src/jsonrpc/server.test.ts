@@ -6,14 +6,12 @@ import { runJsonRpcServer } from "./server";
 
 describe("JsonRpcServer", () => {
   beforeEach(() => {
-    /*
     jest.spyOn(console, "log").mockImplementation(() => {
       // Nothing
     });
     jest.spyOn(console, "warn").mockImplementation(() => {
       // Nothing
     });
-    */
   });
   test("standard", async () => {
     const calls = [] as [unknown, unknown][];
@@ -22,9 +20,9 @@ describe("JsonRpcServer", () => {
       calls.push([params, connection]);
       return params;
     });
-    const { server } = runJsonRpcServer(jr, { port: 34568 });
+    const { server } = runJsonRpcServer(jr, { port: 34570 });
     await new Promise((res) => setTimeout(res, 10));
-    const socket = new WebSocket("ws://127.0.0.1:34568");
+    const socket = new WebSocket("ws://127.0.0.1:34570");
 
     const responses = [] as JSONRPCResponse[];
     socket.on("message", (data) => responses.push(JSON.parse(data.toString())));
@@ -67,9 +65,9 @@ describe("JsonRpcServer", () => {
       calls.push([params, connection!]);
       return params;
     });
-    const { server } = runJsonRpcServer(jr, { port: 34568 });
+    const { server } = runJsonRpcServer(jr, { port: 34570 });
     await new Promise((res) => setTimeout(res, 10));
-    const socket = new WebSocket("ws://127.0.0.1:34568");
+    const socket = new WebSocket("ws://127.0.0.1:34570");
 
     const responses = [] as (JSONRPCResponse & WithConnectionId)[];
     socket.on("message", (data) => responses.push(JSON.parse(data.toString())));
@@ -191,9 +189,9 @@ describe("JsonRpcServer", () => {
       calls.push([params, connection!]);
       return params;
     });
-    const { server } = runJsonRpcServer(jr, { port: 34568 });
+    const { server } = runJsonRpcServer(jr, { port: 34570 });
     await new Promise((res) => setTimeout(res, 10));
-    const socket = new WebSocket("ws://127.0.0.1:34568");
+    const socket = new WebSocket("ws://127.0.0.1:34570");
 
     const responses = [] as (JSONRPCResponse & WithConnectionId)[];
     socket.on("message", (data) => responses.push(JSON.parse(data.toString())));

@@ -70,7 +70,7 @@ export function runConnector({ actions, triggers, webhooks, inputProviders, opti
     if (!connection) {
       throw new Error("This method is only callable via WebSocket");
     }
-    if (!connection.isOpen()) {
+    if (!connection.isOpen) {
       throw new Error("Socket is not open");
     }
     const trigger = triggers[params.key];
@@ -80,7 +80,7 @@ export function runConnector({ actions, triggers, webhooks, inputProviders, opti
         if (reason.length > 100) {
           reason = reason.slice(0, 100) + "...";
         }
-        if (connection.isOpen()) {
+        if (connection.isOpen) {
           connection.close(code, reason);
         }
       });

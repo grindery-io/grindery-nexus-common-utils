@@ -14,7 +14,7 @@ export class MuxableJsonRpcWebSocket extends EventEmitter implements IJsonRpcCon
   );
   private supportsMuxing: boolean | null = null;
 
-  constructor(url: string, private requestTimeout = 60000) {
+  constructor(private url: string, private requestTimeout = 60000) {
     super();
     this.ws = new WebSocket(url);
     this.ws.on("message", (data) => {
@@ -53,15 +53,26 @@ export class MuxableJsonRpcWebSocket extends EventEmitter implements IJsonRpcCon
     });
     this.manager.getDefaultConnection().on("close", (code, reason) => this.close(code, reason));
   }
+  getDefaultConnection() {
+    return this.manager.getDefaultConnection();
+  }
+  maybeClose() {
+    if (this.manager.getNumChildren() === 0) {
+      this.close(1000, "All children connections are closed");
+    }
+  }
   async createConnection() {
-    if (!this.isOpen()) {
+    if (!this.isOpen) {
       throw new Error("Can't create child connection on closed parent connection");
     }
     if (this.supportsMuxing === null) {
       await this.manager.getDefaultConnection().request("ping");
     }
     if (this.supportsMuxing) {
-      return this.manager.createConnection();
+      const ret = this.manager.createConnection();
+      ret.once("close", () => setTimeout(this.maybeClose.bind(this), 0));
+      console.log(`[${this.url}] Creating muxed connection: ${ret.connectionId}`);
+      return ret;
     }
     return null;
   }
@@ -69,12 +80,12 @@ export class MuxableJsonRpcWebSocket extends EventEmitter implements IJsonRpcCon
     wsSendMessage(this.ws, obj);
   }
   close(code = 1000, reason = "Called close function on MuxableJsonRpcWebSocket") {
-    if (!this.isOpen()) {
+    if (!this.isOpen) {
       return;
     }
     this.ws.close(code, reason);
   }
-  isOpen() {
+  get isOpen() {
     return ([WebSocket.CONNECTING, WebSocket.OPEN] as number[]).includes(this.ws.readyState);
   }
 }
