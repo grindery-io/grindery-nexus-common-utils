@@ -14,12 +14,14 @@ describe("Muxable JSON-RPC client", () => {
     });
   });
   test("muxing not supported", async () => {
-    const { server } = runJsonRpcServer(createJsonRpcServer(), { port: 34569, disableMuxing: true });
+    const jr = createJsonRpcServer();
+    jr.addMethod("test", () => true);
+    const { server } = runJsonRpcServer(jr, { port: 34569, disableMuxing: true });
     await new Promise((res) => setTimeout(res, 100));
     const socket = new MuxableJsonRpcWebSocket("ws://127.0.0.1:34569", 2000);
     await expect(socket.createConnection()).resolves.toBe(null);
     const defaultConnection = socket.getDefaultConnection();
-    await defaultConnection.request("ping");
+    await defaultConnection.request("test");
     const closeHandler = jest.fn();
     defaultConnection.on("close", closeHandler);
     socket.close();
@@ -30,12 +32,14 @@ describe("Muxable JSON-RPC client", () => {
     await new Promise((res) => setTimeout(res, 100));
   });
   test("muxing not supported (close test)", async () => {
-    const { server } = runJsonRpcServer(createJsonRpcServer(), { port: 34569, disableMuxing: true });
+    const jr = createJsonRpcServer();
+    jr.addMethod("test", () => true);
+    const { server } = runJsonRpcServer(jr, { port: 34569, disableMuxing: true });
     await new Promise((res) => setTimeout(res, 100));
     const socket = new MuxableJsonRpcWebSocket("ws://127.0.0.1:34569", 2000);
     await expect(socket.createConnection()).resolves.toBe(null);
     const defaultConnection = socket.getDefaultConnection();
-    await defaultConnection.request("ping");
+    await defaultConnection.request("test");
     const closeHandler = jest.fn();
     socket.on("close", closeHandler);
     defaultConnection.close();
