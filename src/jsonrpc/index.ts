@@ -9,6 +9,7 @@ import * as Sentry from "@sentry/node";
 import { ServerParams } from "./types";
 
 export * from "./connection";
+export * from "./client";
 export * from "./types";
 
 export class InvalidParamsError extends Error {
