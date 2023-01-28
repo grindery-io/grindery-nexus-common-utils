@@ -1,6 +1,7 @@
 import { describe, test, jest, beforeEach, expect } from "@jest/globals";
 import { JSONRPCRequest } from "json-rpc-2.0";
 import { createJsonRpcServer } from "..";
+import { getPort } from "../../testUtils";
 import { runJsonRpcServer } from "../server";
 import { MuxableJsonRpcWebSocket } from "./muxable/parent";
 
@@ -16,9 +17,10 @@ describe("Muxable JSON-RPC client", () => {
   test("muxing not supported", async () => {
     const jr = createJsonRpcServer();
     jr.addMethod("test", () => true);
-    const { server } = runJsonRpcServer(jr, { port: 34569, disableMuxing: true });
+    const port = await getPort();
+    const { server } = runJsonRpcServer(jr, { port, disableMuxing: true });
     await new Promise((res) => setTimeout(res, 100));
-    const socket = new MuxableJsonRpcWebSocket("ws://127.0.0.1:34569", 2000);
+    const socket = new MuxableJsonRpcWebSocket(`ws://127.0.0.1:${port}`, 2000);
     await expect(socket.createConnection()).resolves.toBe(null);
     const defaultConnection = socket.getDefaultConnection();
     await defaultConnection.request("test");
@@ -34,9 +36,10 @@ describe("Muxable JSON-RPC client", () => {
   test("muxing not supported (close test)", async () => {
     const jr = createJsonRpcServer();
     jr.addMethod("test", () => true);
-    const { server } = runJsonRpcServer(jr, { port: 34569, disableMuxing: true });
+    const port = await getPort();
+    const { server } = runJsonRpcServer(jr, { port, disableMuxing: true });
     await new Promise((res) => setTimeout(res, 100));
-    const socket = new MuxableJsonRpcWebSocket("ws://127.0.0.1:34569", 2000);
+    const socket = new MuxableJsonRpcWebSocket(`ws://127.0.0.1:${port}`, 2000);
     await expect(socket.createConnection()).resolves.toBe(null);
     const defaultConnection = socket.getDefaultConnection();
     await defaultConnection.request("test");
@@ -56,9 +59,10 @@ describe("Muxable JSON-RPC client", () => {
       connection.send({ jsonrpc: "2.0", method: "notify", params } as JSONRPCRequest)
     );
     jr.addMethod("test", method);
-    const { server } = runJsonRpcServer(jr, { port: 34569 });
+    const port = await getPort();
+    const { server } = runJsonRpcServer(jr, { port });
     await new Promise((res) => setTimeout(res, 100));
-    const socket = new MuxableJsonRpcWebSocket("ws://127.0.0.1:34569", 2000);
+    const socket = new MuxableJsonRpcWebSocket(`ws://127.0.0.1:${port}`, 2000);
     const [[conn1, notifyFn1, closeHandler1], [conn2, notifyFn2, closeHandler2], [conn3, notifyFn3, closeHandler3]] =
       await Promise.all(
         [1, 2, 3].map(async () => {
@@ -109,9 +113,10 @@ describe("Muxable JSON-RPC client", () => {
     const jr = createJsonRpcServer();
     jr.addMethod("test", async () => undefined);
     jr.addMethod("timeout", () => new Promise((res) => setTimeout(res, 200)));
-    const { server } = runJsonRpcServer(jr, { port: 34569 });
+    const port = await getPort();
+    const { server } = runJsonRpcServer(jr, { port });
     await new Promise((res) => setTimeout(res, 100));
-    const socket = new MuxableJsonRpcWebSocket("ws://127.0.0.1:34569", 100);
+    const socket = new MuxableJsonRpcWebSocket(`ws://127.0.0.1:${port}`, 100);
     const [[conn1, closeHandler1], [conn2, closeHandler2], [conn3, closeHandler3]] = await Promise.all(
       [1, 2, 3].map(async () => {
         const conn = await socket.createConnection();

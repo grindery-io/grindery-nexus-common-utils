@@ -1,5 +1,6 @@
 import { describe, test, jest, beforeEach, expect } from "@jest/globals";
 import { createJsonRpcServer } from "..";
+import { getPort } from "../../testUtils";
 import { runJsonRpcServer } from "../server";
 import { getAdaptiveConnection } from "./adaptive";
 
@@ -15,13 +16,14 @@ describe("Adaptive JSON-RPC client", () => {
   test("muxing not supported", async () => {
     const jr = createJsonRpcServer();
     jr.addMethod("test", () => true);
-    const { server } = runJsonRpcServer(jr, { port: 34571, disableMuxing: true });
+    const port = await getPort();
+    const { server } = runJsonRpcServer(jr, { port, disableMuxing: true });
     await new Promise((res) => setTimeout(res, 100));
-    const socket = await getAdaptiveConnection("ws://127.0.0.1:34571", 2000);
+    const socket = await getAdaptiveConnection(`ws://127.0.0.1:${port}`, 2000);
     await socket.request("test");
-    const socket2 = await getAdaptiveConnection("ws://127.0.0.1:34571", 2000);
+    const socket2 = await getAdaptiveConnection(`ws://127.0.0.1:${port}`, 2000);
     await socket2.request("test");
-    const socket3 = await getAdaptiveConnection("ws://127.0.0.1:34571", 2000);
+    const socket3 = await getAdaptiveConnection(`ws://127.0.0.1:${port}`, 2000);
     await socket3.request("test");
     const closeHandler = jest.fn();
     socket.on("close", closeHandler);
@@ -38,10 +40,11 @@ describe("Adaptive JSON-RPC client", () => {
   test("muxing supported", async () => {
     const jr = createJsonRpcServer();
     jr.addMethod("test", () => true);
-    const { server } = runJsonRpcServer(jr, { port: 34572 });
+    const port = await getPort();
+    const { server } = runJsonRpcServer(jr, { port });
     await new Promise((res) => setTimeout(res, 100));
     const [socket, socket2, socket3] = await Promise.all(
-      [1, 2, 3].map(() => getAdaptiveConnection("ws://127.0.0.1:34572", 2000))
+      [1, 2, 3].map(() => getAdaptiveConnection(`ws://127.0.0.1:${port}`, 2000))
     );
     await socket.request("test");
     await socket2.request("test");
@@ -63,9 +66,10 @@ describe("Adaptive JSON-RPC client", () => {
   test("muxing supported with reconnection", async () => {
     const jr = createJsonRpcServer();
     jr.addMethod("test", () => true);
-    const { server } = runJsonRpcServer(jr, { port: 34573 });
+    const port = await getPort();
+    const { server } = runJsonRpcServer(jr, { port });
     await new Promise((res) => setTimeout(res, 100));
-    let [socket, socket2] = await Promise.all([1, 2].map(() => getAdaptiveConnection("ws://127.0.0.1:34573", 2000)));
+    let [socket, socket2] = await Promise.all([1, 2].map(() => getAdaptiveConnection(`ws://127.0.0.1:${port}`, 2000)));
     await socket.request("test");
     await socket2.request("test");
     socket.close();
@@ -73,7 +77,7 @@ describe("Adaptive JSON-RPC client", () => {
 
     await new Promise((res) => setTimeout(res, 100));
 
-    [socket, socket2] = await Promise.all([1, 2].map(() => getAdaptiveConnection("ws://127.0.0.1:34573", 2000)));
+    [socket, socket2] = await Promise.all([1, 2].map(() => getAdaptiveConnection(`ws://127.0.0.1:${port}`, 2000)));
     await socket.request("test");
     await socket2.request("test");
     socket.close();

@@ -2,6 +2,7 @@ import { describe, test, jest, beforeEach, expect } from "@jest/globals";
 import { JSONRPCResponse } from "json-rpc-2.0";
 import WebSocket from "ws";
 import { createJsonRpcServer, IJsonRpcConnection, WithConnectionId } from ".";
+import { getPort } from "../testUtils";
 import { runJsonRpcServer } from "./server";
 
 describe("JsonRpcServer", () => {
@@ -20,9 +21,10 @@ describe("JsonRpcServer", () => {
       calls.push([params, connection]);
       return params;
     });
-    const { server } = runJsonRpcServer(jr, { port: 34570 });
+    const port = await getPort();
+    const { server } = runJsonRpcServer(jr, { port });
     await new Promise((res) => setTimeout(res, 10));
-    const socket = new WebSocket("ws://127.0.0.1:34570");
+    const socket = new WebSocket(`ws://127.0.0.1:${port}`);
 
     const responses = [] as JSONRPCResponse[];
     socket.on("message", (data) => responses.push(JSON.parse(data.toString())));
@@ -65,9 +67,10 @@ describe("JsonRpcServer", () => {
       calls.push([params, connection!]);
       return params;
     });
-    const { server } = runJsonRpcServer(jr, { port: 34570 });
+    const port = await getPort();
+    const { server } = runJsonRpcServer(jr, { port });
     await new Promise((res) => setTimeout(res, 10));
-    const socket = new WebSocket("ws://127.0.0.1:34570");
+    const socket = new WebSocket(`ws://127.0.0.1:${port}`);
 
     const responses = [] as (JSONRPCResponse & WithConnectionId)[];
     socket.on("message", (data) => responses.push(JSON.parse(data.toString())));
@@ -189,9 +192,10 @@ describe("JsonRpcServer", () => {
       calls.push([params, connection!]);
       return params;
     });
-    const { server } = runJsonRpcServer(jr, { port: 34570 });
+    const port = await getPort();
+    const { server } = runJsonRpcServer(jr, { port });
     await new Promise((res) => setTimeout(res, 10));
-    const socket = new WebSocket("ws://127.0.0.1:34570");
+    const socket = new WebSocket(`ws://127.0.0.1:${port}`);
 
     const responses = [] as (JSONRPCResponse & WithConnectionId)[];
     socket.on("message", (data) => responses.push(JSON.parse(data.toString())));

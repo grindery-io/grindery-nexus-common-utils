@@ -6,7 +6,7 @@
   "scripts": {
     "prepare": "tsc && husky install",
     "watch": "tsc --watch",
-    "test": "eslint --ext js,ts src/ && tsc --noEmit -p tsconfig.json && jest"
+    "test": "eslint --ext js,ts src/ && tsc --noEmit -p tsconfig.json && NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "files": [
     "dist",
