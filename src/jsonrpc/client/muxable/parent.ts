@@ -18,6 +18,7 @@ export class MuxableJsonRpcWebSocket extends EventEmitter implements IJsonRpcCon
 
   constructor(private url: string, private requestTimeout = 60000) {
     super();
+    this.setMaxListeners(1000);
     this.ws = new WebSocket(url);
     this.ws.on("message", (data) => {
       let msg: (JSONRPCRequest | JSONRPCResponse) & WithConnectionId;
