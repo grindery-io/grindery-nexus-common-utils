@@ -34,15 +34,19 @@ export class MuxedChildConnection<ParentType extends IJsonRpcConnection = IJsonR
     }
     this.closed = true;
     if (this.parent.isOpen) {
-      this.parent.send({
-        jsonrpc: "2.0",
-        method: "_grinderyNexusCloseConnection",
-        params: {
-          code,
-          reason: Buffer.isBuffer(reason) ? reason.toString("utf-8") : reason,
-        },
-        connectionId: this.connectionId,
-      } as (JSONRPCRequest | JSONRPCResponse) & WithConnectionId);
+      try {
+        this.parent.send({
+          jsonrpc: "2.0",
+          method: "_grinderyNexusCloseConnection",
+          params: {
+            code,
+            reason: Buffer.isBuffer(reason) ? reason.toString("utf-8") : reason,
+          },
+          connectionId: this.connectionId,
+        } as (JSONRPCRequest | JSONRPCResponse) & WithConnectionId);
+      } catch (e) {
+        // Ignore
+      }
     }
     this.emit("close", code, reason);
     console.log(

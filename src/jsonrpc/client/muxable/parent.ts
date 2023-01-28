@@ -73,7 +73,11 @@ export class MuxableJsonRpcWebSocket extends EventEmitter implements IJsonRpcCon
       return await this.pingPromise;
     }
     this.pingPromise = this.getDefaultConnection().request("ping");
-    this.pingPromise.finally(() => (this.pingPromise = null));
+    this.pingPromise
+      .finally(() => (this.pingPromise = null))
+      .catch(() => {
+        /* Nothing to do */
+      });
     return await this.pingPromise;
   }
   async createConnection() {
