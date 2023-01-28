@@ -61,7 +61,7 @@ export class MuxableJsonRpcWebSocket extends EventEmitter implements IJsonRpcCon
   }
   maybeClose() {
     if (this.manager.getNumChildren() === 0) {
-      this.close(1000, "All children connections are closed");
+      this.close(1000, "All child connections are closed");
     }
   }
   async coalescedPing() {
