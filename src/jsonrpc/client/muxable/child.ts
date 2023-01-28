@@ -9,7 +9,7 @@ import {
 import { MuxedChildConnection } from "../../connection";
 import { MuxableJsonRpcWebSocket } from "./parent";
 
-export class JsonRpcWebSocketClientConnection extends MuxedChildConnection {
+export class JsonRpcWebSocketClientConnection extends MuxedChildConnection<MuxableJsonRpcWebSocket> {
   private serverAndClient = new JSONRPCServerAndClient(
     new JSONRPCServer(),
     new JSONRPCClient(async (request) => {
@@ -34,6 +34,9 @@ export class JsonRpcWebSocketClientConnection extends MuxedChildConnection {
   async request<T extends JSONRPCParams, U = unknown>(method: string, params?: T): Promise<U> {
     if (!this.isOpen) {
       throw new Error("WebSocket is not open");
+    }
+    if (method === "ping" && this.connectionId) {
+      return (await this.parent.coalescedPing()) as U;
     }
     let deadLineTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
       deadLineTimer = null;

@@ -2,9 +2,12 @@ import { JSONRPCRequest, JSONRPCResponse } from "json-rpc-2.0";
 import EventEmitter from "node:events";
 import { IJsonRpcConnection, WithConnectionId } from "./types";
 
-export class MuxedChildConnection extends EventEmitter implements IJsonRpcConnection {
+export class MuxedChildConnection<ParentType extends IJsonRpcConnection = IJsonRpcConnection>
+  extends EventEmitter
+  implements IJsonRpcConnection
+{
   private closed = false;
-  constructor(private parent: IJsonRpcConnection, public readonly connectionId: string) {
+  constructor(protected readonly parent: ParentType, public readonly connectionId: string) {
     super();
     parent.once("close", this.handleClose.bind(this));
     parent.once("error", this.handleError.bind(this));

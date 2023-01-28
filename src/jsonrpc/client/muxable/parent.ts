@@ -13,6 +13,8 @@ export class MuxableJsonRpcWebSocket extends EventEmitter implements IJsonRpcCon
     false
   );
   private supportsMuxing: boolean | null = null;
+  private lastRxTimestamp = 0;
+  private pingPromise = null as Promise<unknown> | null;
 
   constructor(private url: string, private requestTimeout = 60000) {
     super();
@@ -37,6 +39,7 @@ export class MuxableJsonRpcWebSocket extends EventEmitter implements IJsonRpcCon
         return;
       }
       this.supportsMuxing = "connectionId" in msg;
+      this.lastRxTimestamp = Date.now();
       connResult[0].processMessage(msg);
     });
     const handleClose = (code: number, reason?: Buffer) => {
@@ -60,6 +63,17 @@ export class MuxableJsonRpcWebSocket extends EventEmitter implements IJsonRpcCon
     if (this.manager.getNumChildren() === 0) {
       this.close(1000, "All children connections are closed");
     }
+  }
+  async coalescedPing() {
+    if (Date.now() - this.lastRxTimestamp < 10000) {
+      return true;
+    }
+    if (this.pingPromise) {
+      return await this.pingPromise;
+    }
+    this.pingPromise = this.getDefaultConnection().request("ping");
+    this.pingPromise.finally(() => (this.pingPromise = null));
+    return await this.pingPromise;
   }
   async createConnection() {
     if (!this.isOpen) {
