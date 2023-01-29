@@ -1,6 +1,6 @@
 import { JSONRPCRequest, JSONRPCServer } from "json-rpc-2.0";
 
-export async function cliMain(server: JSONRPCServer) {
+export async function cliMain(server: JSONRPCServer<unknown>) {
   const [, , method, payloadRaw] = process.argv;
   let payload: JSONRPCRequest | null = null;
   try {
