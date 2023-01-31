@@ -49,6 +49,7 @@ export class MuxedChildConnection<ParentType extends IJsonRpcConnection = IJsonR
       }
     }
     this.emit("close", code, reason);
+    this.removeAllListeners("close");
     console.log(
       `[${this.connectionId}] Connection closed: ${code} - ${
         Buffer.isBuffer(reason) ? reason.toString("utf-8") : reason

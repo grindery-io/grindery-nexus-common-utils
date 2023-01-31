@@ -18,7 +18,7 @@ export class JsonRpcWebSocketClientConnection extends MuxedChildConnection<Muxab
   );
   constructor(parent: MuxableJsonRpcWebSocket, connectionId: string, private requestTimeout: number) {
     super(parent, connectionId);
-    this.on("close", (code, reason) => this.serverAndClient.rejectAllPendingRequests(`${code} - ${reason}`));
+    this.once("close", (code, reason) => this.serverAndClient.rejectAllPendingRequests(`${code} - ${reason}`));
   }
   processMessage(msg: JSONRPCRequest | JSONRPCResponse) {
     this.serverAndClient.receiveAndSend(msg).catch((e) => console.error("receiveAndSend error: ", e));
