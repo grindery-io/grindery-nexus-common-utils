@@ -51,6 +51,7 @@ export abstract class TriggerBase<T = unknown> extends EventEmitter {
     for (const process of this.listeners("processSignal")) {
       if ((await process(payload)) === false) {
         console.log("Dropping notification:", { payload });
+        return;
       }
     }
     this.emit("signal", {
