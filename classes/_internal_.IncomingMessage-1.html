@@ -446,29 +446,13 @@ type other than <code>net.Socket</code> or internally nulled.</p>
 <div class="tsd-comment tsd-typography"><p><strong>Only valid for request obtained from <a href="_internal_.Server.html">Server</a>.</strong></p>
 <p>Request URL string. This contains only the URL that is present in the actual
 HTTP request. Take the following request:</p>
-<pre><code class="language-http">GET /status?name=ryan HTTP/1.1
-Accept: text/plain
+<pre><code class="language-http"><span class="hl-8">GET</span><span class="hl-1"> /status?name=ryan </span><span class="hl-0">HTTP</span><span class="hl-1">/</span><span class="hl-7">1.1</span><br/><span class="hl-12">Accept</span><span class="hl-0">:</span><span class="hl-1"> </span><span class="hl-4">text/plain</span>
 </code></pre>
 <p>To parse the URL into its parts:</p>
 <pre><code class="language-js"><span class="hl-0">new</span><span class="hl-1"> </span><span class="hl-3">URL</span><span class="hl-1">(</span><span class="hl-6">request</span><span class="hl-1">.</span><span class="hl-6">url</span><span class="hl-1">, </span><span class="hl-4">`http://</span><span class="hl-0">${</span><span class="hl-6">request</span><span class="hl-9">.</span><span class="hl-3">getHeaders</span><span class="hl-9">().</span><span class="hl-6">host</span><span class="hl-0">}</span><span class="hl-4">`</span><span class="hl-1">);</span>
 </code></pre>
 <p>When <code>request.url</code> is <code>&#39;/status?name=ryan&#39;</code> and<code>request.getHeaders().host</code> is <code>&#39;localhost:3000&#39;</code>:</p>
-<pre><code class="language-console">$ node
-&gt; new URL(request.url, `http://${request.getHeaders().host}`)
-URL {
-  href: &#39;http://localhost:3000/status?name=ryan&#39;,
-  origin: &#39;http://localhost:3000&#39;,
-  protocol: &#39;http:&#39;,
-  username: &#39;&#39;,
-  password: &#39;&#39;,
-  host: &#39;localhost:3000&#39;,
-  hostname: &#39;localhost&#39;,
-  port: &#39;3000&#39;,
-  pathname: &#39;/status&#39;,
-  search: &#39;?name=ryan&#39;,
-  searchParams: URLSearchParams { &#39;name&#39; =&gt; &#39;ryan&#39; },
-  hash: &#39;&#39;
-}
+<pre><code class="language-console"><span class="hl-1">$ </span><span class="hl-4">node</span><br/><span class="hl-1">&gt; new URL(request.url, </span><span class="hl-3">`http://${request.getHeaders</span><span class="hl-1">().host}</span><span class="hl-4">`)</span><br/><span class="hl-4">URL {</span><br/><span class="hl-4">  href: &#39;http://localhost:3000/status?name=ryan&#39;,</span><br/><span class="hl-4">  origin: &#39;http://localhost:3000&#39;,</span><br/><span class="hl-4">  protocol: &#39;http:&#39;,</span><br/><span class="hl-4">  username: &#39;&#39;,</span><br/><span class="hl-4">  password: &#39;&#39;,</span><br/><span class="hl-4">  host: &#39;localhost:3000&#39;,</span><br/><span class="hl-4">  hostname: &#39;localhost&#39;,</span><br/><span class="hl-4">  port: &#39;3000&#39;,</span><br/><span class="hl-4">  pathname: &#39;/status&#39;,</span><br/><span class="hl-4">  search: &#39;?name=ryan&#39;,</span><br/><span class="hl-4">  searchParams: URLSearchParams { &#39;name&#39; =</span><span class="hl-1">&gt;</span><span class="hl-4"> &#39;ryan&#39; },</span><br/><span class="hl-4">  </span><span class="hl-3">hash</span><span class="hl-4">: &#39;&#39;</span><br/><span class="hl-4">}</span>
 </code></pre>
 
 <h3>Since</h3><p>v0.1.90</p>
