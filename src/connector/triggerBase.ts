@@ -84,7 +84,7 @@ export abstract class TriggerBase<T = unknown> extends EventEmitter {
     return super.emit(e, ...args);
   }
 
-  on(e: "processSignal", listener: (payload: Record<string, unknown>) => Promise<undefined | false>): this;
+  on(e: "processSignal", listener: (payload: Record<string, unknown>) => Promise<void | false>): this;
   on(e: "signal", listener: (payload: JSONRPCRequest) => void): this;
   on(e: "stop", listener: (code: number, reason: string) => void): this;
   on(e: string, listener: (...args) => unknown): this {
