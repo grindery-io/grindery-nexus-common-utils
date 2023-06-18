@@ -39,8 +39,9 @@ export function runConnector({ actions, triggers, webhooks, inputProviders, opti
   const jsonRpcServer = createJsonRpcServer();
 
   async function runAction(params: ConnectorInput): Promise<ConnectorOutput> {
-    if (params.key in actions) {
-      let result = await actions[params.key](params);
+    const action = actions[params.key] || actions["*"];
+    if (action) {
+      let result = await action(params);
       if (!("payload" in result)) {
         console.warn(`Action ${params.key} returned result in incorrect format, wrapping it`);
         result = { payload: result };
