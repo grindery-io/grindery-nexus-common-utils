@@ -11,7 +11,7 @@ async function runAction(def: ConnectorDefinition, key: string, payload: unknown
 }
 
 async function runTrigger(def: ConnectorDefinition, key: string, payload: unknown) {
-  const trigger = def.triggers[key];
+  const trigger = def.triggers[key] || def.triggers["*"];
   if (!trigger) {
     throw new Error(`Trigger not found: ${key}`);
   }
