@@ -9,8 +9,8 @@ export type ConnectorInput<T = unknown> = WebSocketPayloadCommon & {
   authentication?: string;
   fields: T;
 };
-export type ConnectorOutput = WebSocketPayloadCommon & {
-  payload: unknown;
+export type ConnectorOutput<T = unknown> = WebSocketPayloadCommon & {
+  payload: T;
 };
 
 export type InputProviderInput<T = unknown> = {
@@ -25,10 +25,10 @@ export type InputProviderOutput = {
   sample?: Record<string, unknown>;
 };
 
-export type ActionOutput = Pick<ConnectorOutput, "payload">;
+export type ActionOutput<T = unknown> = Pick<ConnectorOutput<T>, "payload">;
 
-export type WebhookParams = {
+export type WebhookParams<T = unknown> = {
   method: string;
   path: string;
-  payload: unknown;
+  payload: T;
 };

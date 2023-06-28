@@ -11,28 +11,34 @@ import {
   ConnectorOutput,
 } from "./types";
 
-type Action = (params: ConnectorInput<unknown>) => Promise<ActionOutput>;
+type Action<TInput = unknown, TOutput = unknown> = (params: ConnectorInput<TInput>) => Promise<ActionOutput<TOutput>>;
 
-export type WebhookOutput = ActionOutput &
+export type WebhookOutput<T = unknown> = ActionOutput<T> &
   ({ returnUnwrapped?: undefined | false } | { returnUnwrapped: true; statusCode?: number; contentType?: string });
 
-type WebhookHandler = (params: ConnectorInput<WebhookParams>) => Promise<WebhookOutput>;
+type WebhookHandler<TInput = unknown, TOutput = unknown> = (
+  params: ConnectorInput<WebhookParams<TInput>>
+) => Promise<WebhookOutput<TOutput>>;
 
-type InputProvider = (params: InputProviderInput) => Promise<InputProviderOutput>;
+type InputProvider<TInput = unknown> = (params: InputProviderInput<TInput>) => Promise<InputProviderOutput>;
 
-type TriggerFactory =
-  | (new (input: ConnectorInput) => TriggerBase)
+type TriggerFactory<TInput = unknown, TOutput = unknown> =
+  | (new (input: ConnectorInput<TInput>) => TriggerBase<TOutput>)
   | {
-      factory: (input: ConnectorInput) => Promise<TriggerBase> | TriggerBase;
+      factory: (input: ConnectorInput<TInput>) => Promise<TriggerBase<TOutput>> | TriggerBase<TOutput>;
     };
 
 export type ConnectorDefinition = {
-  actions: { [name: string]: Action };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  actions: { [name: string]: Action<any, unknown> };
   triggers: {
-    [name: string]: TriggerFactory;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [name: string]: TriggerFactory<any, unknown>;
   };
-  webhooks?: { [key: string]: WebhookHandler };
-  inputProviders?: { [key: string]: InputProvider };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  webhooks?: { [key: string]: WebhookHandler<any, unknown> };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  inputProviders?: { [key: string]: InputProvider<any> };
   options?: RunJsonRpcServerOptions;
 };
 export function runConnector({ actions, triggers, webhooks, inputProviders, options }: ConnectorDefinition) {
