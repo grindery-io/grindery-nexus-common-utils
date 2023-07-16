@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { ConnectorDefinition } from "./run";
-import { ConnectorInput } from "./types";
+import { ConnectorInput, TriggerInit, TriggerInput } from "./types";
 
 async function runAction(def: ConnectorDefinition, key: string, payload: unknown) {
   const action = def.actions[key];
@@ -10,22 +10,29 @@ async function runAction(def: ConnectorDefinition, key: string, payload: unknown
   return await action(payload as ConnectorInput);
 }
 
-async function runTrigger(def: ConnectorDefinition, key: string, payload: unknown) {
+async function runTrigger(def: ConnectorDefinition, key: string, payload: TriggerInput) {
   const trigger = def.triggers[key] || def.triggers["*"];
   if (!trigger) {
     throw new Error(`Trigger not found: ${key}`);
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const instance =
-    typeof trigger === "object"
-      ? await trigger.factory(payload as ConnectorInput)
-      : new trigger(payload as ConnectorInput);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  instance.on("signal", (msg) => console.log("New signal:", (msg.params as any)?.payload));
+  const init: TriggerInit = {
+    ...payload,
+    hostServices: {
+      async setInitStates(value: unknown): Promise<void> {
+        console.log("setInitStates:", value);
+      },
+      sendNotification(payload: unknown): void {
+        console.log("New signal:", payload);
+      },
+      onStop(code = 1000, reason = "Trigger stopped"): void {
+        console.log("Trigger stopped:", code, reason);
+        process.exit(0);
+      },
+    },
+  };
+  const instance = typeof trigger === "object" ? await trigger.factory(init) : new trigger(init);
   instance.start();
   console.log(`Trigger ${key} started`);
-  await new Promise((res) => instance.on("stop", () => res(undefined)));
-  console.log("Trigger stopped");
 }
 
 export async function cliMain(def: ConnectorDefinition) {
@@ -49,7 +56,7 @@ export async function cliMain(def: ConnectorDefinition) {
   if (mode === "action") {
     return await runAction(def, key, payload);
   } else if (mode === "trigger") {
-    return await runTrigger(def, key, payload);
+    return await runTrigger(def, key, payload as TriggerInput);
   }
   throw new Error(`Invalid mode: ${mode}`);
 }

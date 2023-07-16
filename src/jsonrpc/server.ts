@@ -103,6 +103,9 @@ export function runJsonRpcServer(
           return;
         }
       }
+      if (parsed?.jsonrpc && !("method" in parsed)) {
+        return;
+      }
       if (!disableMuxing) {
         (result as WithConnectionId).connectionId = connectionId;
       }

@@ -1,7 +1,5 @@
-import { EventEmitter } from "node:events";
 import * as Sentry from "@sentry/node";
-import { ConnectorInput } from ".";
-import { JSONRPCRequest } from "json-rpc-2.0";
+import { TriggerHostServices, TriggerInit } from ".";
 
 function createStopper() {
   let resolve, reject;
@@ -16,17 +14,33 @@ function createStopper() {
   return promise;
 }
 
-export abstract class TriggerBase<T = unknown> extends EventEmitter {
-  protected sessionId = "";
-  protected key = "";
+export interface ITriggerInstance {
+  get isRunning(): boolean;
+  stop(reason: string): void;
+  start(): void;
+  main(): Promise<unknown>;
+}
+
+export abstract class TriggerBase<
+  TInput = unknown,
+  TNotificationPayload = Record<string, unknown>,
+  TState extends Record<string, unknown> = Record<string, unknown>
+> implements ITriggerInstance
+{
+  protected readonly sessionId: string;
+  protected readonly key: string;
   private running = false;
-  protected fields: T;
+  protected readonly fields: TInput;
+  private readonly hostServices: TriggerHostServices<TNotificationPayload>;
+  protected readonly state: TState;
   private stopper = createStopper();
-  constructor(private input: ConnectorInput) {
-    super();
-    this.fields = input.fields as T;
+
+  constructor(private readonly input: TriggerInit<TInput, TNotificationPayload, TState>) {
+    this.fields = input.fields as TInput;
     this.sessionId = input.sessionId;
     this.key = input.key;
+    this.state = input.initStates || ({} as TState);
+    this.hostServices = input.hostServices;
   }
   get isRunning() {
     return this.running;
@@ -44,51 +58,39 @@ export abstract class TriggerBase<T = unknown> extends EventEmitter {
   protected async waitForStop() {
     await this.stopper;
   }
-  private async sendNotificationAsync(payload: Record<string, unknown>) {
+  protected async processSignal(_payload: TNotificationPayload): Promise<boolean> {
+    return true;
+  }
+  private async sendNotificationAsync(payload: TNotificationPayload) {
     if (!this.running) {
       return;
     }
-    for (const process of this.listeners("processSignal")) {
-      if ((await process(payload)) === false) {
-        console.log("Dropping notification:", { payload });
-        return;
-      }
+    if ((await this.processSignal(payload)) === false) {
+      console.log("Dropping notification:", { payload });
+      return;
     }
-    this.emit("signal", {
-      jsonrpc: "2.0",
-      method: "notifySignal",
-      params: { key: this.input.key, sessionId: this.input.sessionId, payload },
-    });
+    this.hostServices.sendNotification(payload);
   }
-  protected sendNotification(payload: Record<string, unknown>) {
+  protected sendNotification(payload: TNotificationPayload) {
     this.sendNotificationAsync(payload).catch((e) => console.error("Failed to send notification:", e));
+  }
+  protected async updateState(newValues: Partial<TState>) {
+    Object.assign(this.state, newValues);
+    await this.hostServices.setInitStates(this.state);
   }
   start() {
     this.running = true;
     this.main()
       .then((result) => {
         this.running = false;
-        this.emit("stop", 1000, result ? String(result) : "Trigger stopped normally");
+        this.hostServices.onStop(1000, result ? String(result) : "Trigger stopped normally");
       })
       .catch((e) => {
         this.running = false;
-        this.emit("stop", 3001, String(e));
+        this.hostServices.onStop(3001, String(e));
         console.error(e);
         Sentry.captureException(e);
       });
   }
   abstract main(): Promise<unknown>;
-
-  emit(e: "signal", payload: JSONRPCRequest): boolean;
-  emit(e: "stop", code: number, reason: string): boolean;
-  emit(e: string, ...args: unknown[]): boolean {
-    return super.emit(e, ...args);
-  }
-
-  on(e: "processSignal", listener: (payload: Record<string, unknown>) => Promise<void | false>): this;
-  on(e: "signal", listener: (payload: JSONRPCRequest) => void): this;
-  on(e: "stop", listener: (code: number, reason: string) => void): this;
-  on(e: string, listener: (...args) => unknown): this {
-    return super.on(e, listener);
-  }
 }

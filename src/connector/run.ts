@@ -1,7 +1,8 @@
+import { JSONRPCRequest } from "json-rpc-2.0";
 import { createJsonRpcServer, forceObject } from "../jsonrpc";
 import { IJsonRpcConnection } from "../jsonrpc/connection";
 import { runJsonRpcServer, RunJsonRpcServerOptions } from "../server";
-import { TriggerBase } from "./triggerBase";
+import { ITriggerInstance } from "./triggerBase";
 import {
   ConnectorInput,
   ActionOutput,
@@ -9,6 +10,9 @@ import {
   InputProviderInput,
   InputProviderOutput,
   ConnectorOutput,
+  TriggerHostServices,
+  TriggerInit,
+  TriggerInput,
 } from "./types";
 
 type Action<TInput = unknown, TOutput = unknown> = (params: ConnectorInput<TInput>) => Promise<ActionOutput<TOutput>>;
@@ -22,10 +26,10 @@ type WebhookHandler<TInput = unknown, TOutput = unknown> = (
 
 type InputProvider<TInput = unknown> = (params: InputProviderInput<TInput>) => Promise<InputProviderOutput>;
 
-type TriggerFactory<TInput = unknown, TOutput = unknown> =
-  | (new (input: ConnectorInput<TInput>) => TriggerBase<TOutput>)
+type TriggerFactory<TInput = unknown, TOutput = unknown, TInitStates = unknown> =
+  | (new (input: TriggerInit<TInput, TOutput, TInitStates>) => ITriggerInstance)
   | {
-      factory: (input: ConnectorInput<TInput>) => Promise<TriggerBase<TOutput>> | TriggerBase<TOutput>;
+      factory: (input: TriggerInit<TInput, TOutput, TInitStates>) => Promise<ITriggerInstance> | ITriggerInstance;
     };
 
 export type ConnectorDefinition = {
@@ -33,7 +37,7 @@ export type ConnectorDefinition = {
   actions: { [name: string]: Action<any, unknown> };
   triggers: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [name: string]: TriggerFactory<any, unknown>;
+    [name: string]: TriggerFactory<any, unknown, any>;
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   webhooks?: { [key: string]: WebhookHandler<any, unknown> };
@@ -73,7 +77,7 @@ export function runConnector({ actions, triggers, webhooks, inputProviders, opti
     const result = await handler(params);
     return result;
   }
-  async function setupSignal(params: ConnectorInput, { connection }: { connection?: IJsonRpcConnection }) {
+  async function setupSignal(params: TriggerInput, { connection }: { connection?: IJsonRpcConnection }) {
     if (!connection) {
       throw new Error("This method is only callable via WebSocket");
     }
@@ -82,18 +86,34 @@ export function runConnector({ actions, triggers, webhooks, inputProviders, opti
     }
     const trigger = triggers[params.key];
     if (trigger) {
-      const instance = typeof trigger === "object" ? await trigger.factory(params) : new trigger(params);
-      instance.on("stop", (code = 1000, reason = "Trigger stopped") => {
-        if (reason.length > 100) {
-          reason = reason.slice(0, 100) + "...";
-        }
-        if (connection.isOpen) {
-          connection.close(code, reason);
-        }
-      });
-      instance.on("signal", (message) => {
-        connection.send(message);
-      });
+      const hostServices: TriggerHostServices<unknown> = {
+        async setInitStates(value: unknown): Promise<void> {
+          const message: JSONRPCRequest = {
+            jsonrpc: "2.0",
+            method: "setState",
+            params: { sessionId: params.sessionId, payload: { key: "initStates", value } },
+          };
+          connection.send(message);
+        },
+        sendNotification(payload: unknown): void {
+          const message: JSONRPCRequest = {
+            jsonrpc: "2.0",
+            method: "notifySignal",
+            params: { key: params.key, sessionId: params.sessionId, payload },
+          };
+          connection.send(message);
+        },
+        onStop(code = 1000, reason = "Trigger stopped"): void {
+          if (reason.length > 100) {
+            reason = reason.slice(0, 100) + "...";
+          }
+          if (connection.isOpen) {
+            connection.close(code, reason);
+          }
+        },
+      };
+      const triggerInput: TriggerInit = { ...params, hostServices };
+      const instance = typeof trigger === "object" ? await trigger.factory(triggerInput) : new trigger(triggerInput);
       connection.on("close", () => {
         instance.stop("WebSocket closed");
       });
