@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/node";
-import { TriggerHostServices, TriggerInit } from ".";
+import { TriggerHostServices, TriggerInit, TriggerInput } from ".";
 
 function createStopper() {
   let resolve, reject;
@@ -27,20 +27,25 @@ export abstract class TriggerBase<
   TState extends Record<string, unknown> = Record<string, unknown>
 > implements ITriggerInstance
 {
-  protected readonly sessionId: string;
-  protected readonly key: string;
+  protected readonly input: TriggerInput<TInput>;
   private running = false;
-  protected readonly fields: TInput;
   private readonly hostServices: TriggerHostServices<TNotificationPayload>;
   protected readonly state: TState;
   private stopper = createStopper();
 
-  constructor(private readonly input: TriggerInit<TInput, TNotificationPayload, TState>) {
-    this.fields = input.fields as TInput;
-    this.sessionId = input.sessionId;
-    this.key = input.key;
+  constructor(input: TriggerInit<TInput, TNotificationPayload, TState>) {
+    this.input = input;
     this.state = input.initStates || ({} as TState);
     this.hostServices = input.hostServices;
+  }
+  protected get sessionId(): string {
+    return this.input.sessionId;
+  }
+  protected get key(): string {
+    return this.input.key;
+  }
+  protected get fields(): TInput {
+    return this.input.fields;
   }
   get isRunning() {
     return this.running;
