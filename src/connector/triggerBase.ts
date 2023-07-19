@@ -81,6 +81,9 @@ export abstract class TriggerBase<
   }
   protected async updateState(newValues: Partial<TState>) {
     Object.assign(this.state, newValues);
+    if (!this.running) {
+      return;
+    }
     await this.hostServices.setInitStates(this.state);
   }
   start() {
