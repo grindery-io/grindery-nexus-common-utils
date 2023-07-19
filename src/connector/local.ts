@@ -36,8 +36,9 @@ async function runTrigger(def: ConnectorDefinition, key: string, payload: Trigge
 }
 
 export async function cliMain(def: ConnectorDefinition) {
-  const [, , mode, key, payloadRaw] = process.argv;
-  let payload: Record<string, unknown> = {};
+  const [, , mode, key, payloadRaw, authToken] = process.argv;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let payload: ConnectorInput = {} as any;
   try {
     if (payloadRaw) {
       payload = JSON.parse(payloadRaw);
@@ -48,8 +49,9 @@ export async function cliMain(def: ConnectorDefinition) {
   if (!process.env.RAW_PAYLOAD) {
     payload = {
       key,
+      cdsName: process.env.CDS_NAME || "",
       sessionId: uuidv4(),
-      credentials: {},
+      authentication: authToken,
       fields: payload,
     };
   }
