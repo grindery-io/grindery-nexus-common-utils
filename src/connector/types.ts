@@ -36,8 +36,8 @@ export type TriggerInput<TInput = unknown, TInitStates = unknown> = ConnectorInp
 };
 export type TriggerInit<
   TInput = unknown,
-  TNotificationPayload = Record<string, unknown>,
-  TInitStates = unknown
+  TNotificationPayload extends Record<string, unknown> = Record<string, unknown>,
+  TInitStates extends unknown | Record<string, unknown> = unknown
 > = TriggerInput<TInput, TInitStates> & {
   hostServices: TriggerHostServices<TNotificationPayload>;
 };

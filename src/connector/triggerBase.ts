@@ -23,8 +23,8 @@ export interface ITriggerInstance {
 
 export abstract class TriggerBase<
   TInput = unknown,
-  TNotificationPayload = Record<string, unknown>,
-  TState extends Record<string, unknown> = Record<string, unknown>
+  TNotificationPayload extends Record<string, unknown> = Record<string, unknown>,
+  TState extends unknown | Record<string, unknown> = unknown
 > implements ITriggerInstance
 {
   protected readonly input: TriggerInput<TInput>;
@@ -35,7 +35,7 @@ export abstract class TriggerBase<
 
   constructor(input: TriggerInit<TInput, TNotificationPayload, TState>) {
     this.input = input;
-    this.state = input.initStates || ({} as TState);
+    this.state = (input.initStates || {}) as TState;
     this.hostServices = input.hostServices;
   }
   protected get sessionId(): string {
@@ -80,7 +80,7 @@ export abstract class TriggerBase<
     this.sendNotificationAsync(payload).catch((e) => console.error("Failed to send notification:", e));
   }
   protected async updateState(newValues: Partial<TState>) {
-    Object.assign(this.state, newValues);
+    Object.assign(this.state as object, newValues);
     if (!this.running) {
       return;
     }

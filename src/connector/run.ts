@@ -26,10 +26,16 @@ type WebhookHandler<TInput = unknown, TOutput = unknown> = (
 
 type InputProvider<TInput = unknown> = (params: InputProviderInput<TInput>) => Promise<InputProviderOutput>;
 
-type TriggerFactory<TInput = unknown, TOutput = unknown, TInitStates = unknown> =
-  | (new (input: TriggerInit<TInput, TOutput, TInitStates>) => ITriggerInstance)
+type TriggerFactory<
+  TInput = unknown,
+  TNotificationPayload extends Record<string, unknown> = Record<string, unknown>,
+  TInitStates extends void | Record<string, unknown> = void
+> =
+  | (new (input: TriggerInit<TInput, TNotificationPayload, TInitStates>) => ITriggerInstance)
   | {
-      factory: (input: TriggerInit<TInput, TOutput, TInitStates>) => Promise<ITriggerInstance> | ITriggerInstance;
+      factory: (
+        input: TriggerInit<TInput, TNotificationPayload, TInitStates>
+      ) => Promise<ITriggerInstance> | ITriggerInstance;
     };
 
 export type ConnectorDefinition = {
@@ -37,7 +43,7 @@ export type ConnectorDefinition = {
   actions: { [name: string]: Action<any, unknown> };
   triggers: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [name: string]: TriggerFactory<any, unknown, any>;
+    [name: string]: TriggerFactory<any, Record<string, unknown>, any>;
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   webhooks?: { [key: string]: WebhookHandler<any, unknown> };
