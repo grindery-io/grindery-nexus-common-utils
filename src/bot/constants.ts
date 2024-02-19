@@ -31,6 +31,11 @@ export const enum TransactionStatus {
    * Undefined transaction status.
    */
   UNDEFINED = "",
+
+  /**
+   * Transaction is waiting for confirmation.
+  */
+  WAITING_CONFIRMATION = "waiting_confirmation",
 }
 
 /**
