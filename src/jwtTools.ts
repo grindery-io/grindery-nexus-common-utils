@@ -5,14 +5,14 @@ import * as jose from "jose";
 const defaultGetMasterKey = async function () {
   const masterKey = Buffer.from(process.env.MASTER_KEY || "ERASED");
   process.env["MASTER_KEY"] = "ERASED";
-  if (masterKey.length < 64) {
-    throw new Error("Invalid master key in environment variable");
-  }
   return masterKey;
 };
 
 const initKeys = async (getMasterKey = defaultGetMasterKey) => {
   const masterKey = await getMasterKey();
+  if (masterKey.length < 64) {
+    throw new Error("Master key must be at least 64 characters");
+  }
   const rawKeySource = createHash("sha512").update(masterKey).digest();
   masterKey.fill(0);
 
