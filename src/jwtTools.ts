@@ -2,12 +2,17 @@ import { createHash, createPrivateKey, createPublicKey, KeyObject, webcrypto, cr
 import KeyEncoder from "@tradle/key-encoder";
 import * as jose from "jose";
 
-const initKeys = async () => {
+const defaultGetMasterKey = async function () {
   const masterKey = Buffer.from(process.env.MASTER_KEY || "ERASED");
   process.env["MASTER_KEY"] = "ERASED";
   if (masterKey.length < 64) {
     throw new Error("Invalid master key in environment variable");
   }
+  return masterKey;
+};
+
+const initKeys = async (getMasterKey = defaultGetMasterKey) => {
+  const masterKey = await getMasterKey();
   const rawKeySource = createHash("sha512").update(masterKey).digest();
   masterKey.fill(0);
 
@@ -80,8 +85,10 @@ type JWTPayloadPure = RemoveIndex<jose.JWTPayload>;
 export type TypedJWTPayload<T> = JWTPayloadPure & T;
 
 class JwtTools {
-  private keys = initKeys();
-  constructor(private defaultIssuer: string) {}
+  private readonly keys: ReturnType<typeof initKeys>;
+  constructor(private defaultIssuer: string, getMasterKey = defaultGetMasterKey) {
+    this.keys = initKeys(getMasterKey);
+  }
   encryptJWT = async (payload: jose.JWTPayload, expirationTime: number | string) =>
     await new jose.EncryptJWT(payload)
       .setProtectedHeader({
@@ -137,9 +144,9 @@ class JwtTools {
 
 let instance: JwtTools;
 
-export function getJwtTools(defaultIssuer: string) {
+export function getJwtTools(defaultIssuer: string, getMasterKey = defaultGetMasterKey) {
   if (!instance) {
-    instance = new JwtTools(defaultIssuer);
+    instance = new JwtTools(defaultIssuer, getMasterKey);
   }
   return instance;
 }
