@@ -201,6 +201,9 @@ export type MongoSwap = {
 
   /** User wallet. */
   userWallet: string;
+
+  /** Quote id. */
+  quoteId: string;
 };
 
 /**
