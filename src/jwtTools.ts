@@ -126,20 +126,24 @@ class JwtTools {
       .update(data)
       .digest();
   getPublicJwk = async () => jose.exportJWK((await this.keys).ECDSA_PUBLIC);
-  typedCipher = <T = unknown>(audience: string) =>
+  private _typedCipher = <T>(audience: string) =>
     Object.freeze({
       encrypt: (payload: TypedJWTPayload<T>, expirationTime: number | string) =>
         this.encryptJWT({ aud: audience, ...payload }, expirationTime),
       decrypt: async (token: string, options: jose.JWTDecryptOptions = {}) =>
         (await this.decryptJWT(token, { audience, ...options })).payload as TypedJWTPayload<T>,
     });
-  typedToken = <T = unknown>(audience: string) =>
+  // eslint-disable-next-line no-use-before-define
+  typedCipher = <T = unknown>(audience: string): TypedCipher<T> => this._typedCipher<T>(audience);
+  private _typedToken = <T>(audience: string) =>
     Object.freeze({
       sign: (payload: TypedJWTPayload<T>, expirationTime: number | string) =>
         this.signJWT({ aud: audience, ...payload }, expirationTime),
       verify: async (token: string, options: jose.JWTVerifyOptions = {}) =>
         (await this.verifyJWT(token, { audience, ...options })).payload as TypedJWTPayload<T>,
     });
+  // eslint-disable-next-line no-use-before-define
+  typedToken = <T = unknown>(audience: string): TypedToken<T> => this._typedToken<T>(audience);
 }
 
 let instance: JwtTools;
@@ -150,3 +154,8 @@ export function getJwtTools(defaultIssuer: string, getMasterKey = defaultGetMast
   }
   return instance;
 }
+
+declare const _typedToken: typeof instance["_typedToken"];
+declare const _typedCipher: typeof instance["_typedCipher"];
+export type TypedToken<T> = ReturnType<typeof _typedToken<T>>;
+export type TypedCipher<T> = ReturnType<typeof _typedCipher<T>>;
