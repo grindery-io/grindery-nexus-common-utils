@@ -155,7 +155,7 @@ export function getJwtTools(defaultIssuer: string, getMasterKey = defaultGetMast
   return instance;
 }
 
-const _typedToken: typeof instance["_typedToken"] = undefined as any;
-const _typedCipher: typeof instance["_typedCipher"] = undefined as any;
-export type TypedToken<T> = ReturnType<typeof _typedToken<T>>;
-export type TypedCipher<T> = ReturnType<typeof _typedCipher<T>>;
+declare const _TYPING_typedToken: typeof instance["_typedToken"];
+declare const _TYPING_typedCipher: typeof instance["_typedCipher"];
+export type TypedToken<T> = ReturnType<typeof _TYPING_typedToken<T>>;
+export type TypedCipher<T> = ReturnType<typeof _TYPING_typedCipher<T>>;
