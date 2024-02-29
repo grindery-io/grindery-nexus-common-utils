@@ -147,6 +147,13 @@ export type MongoReward = {
   status: TransactionStatus;
 };
 
+export type TransactionParams = {
+  to: string;
+  from: string;
+  value: string;
+  data: string;
+};
+
 /**
  * Represents a MongoDB document for Swap transactions.
  */
@@ -206,13 +213,14 @@ export type MongoSwap = {
   quoteId: string;
 
   transactionParams: TransactionParams;
-};
 
-export type TransactionParams = {
-  to: string,
-  from: string,
-  value: string,
-  data: string,
+  chainIn: string;
+
+  chainOut: string;
+
+  tokenInSymbol: string;
+
+  tokenOutSymbol: string;
 };
 
 /**
