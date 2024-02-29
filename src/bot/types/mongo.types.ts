@@ -204,6 +204,15 @@ export type MongoSwap = {
 
   /** Quote id. */
   quoteId: string;
+
+  transactionParams: TransactionParams;
+};
+
+export type TransactionParams = {
+  to: string,
+  from: string,
+  value: string,
+  data: string,
 };
 
 /**
