@@ -13,7 +13,7 @@ export class Response<T> {
   }
   sendResponse(res: express.Response) {
     if (this._code === 204) {
-      res.status(204).send();
+      return res.status(204).send();
     }
     return res.status(this._code).json(this._resp);
   }
@@ -28,10 +28,7 @@ const TOKEN_TRANSFORMERS = {
 
 // > replaceTokens("abc{{ '{{' }} def }}abc")
 // "abc{{ def }}abc"
-export function replaceTokens<T>(
-  obj: T,
-  context: { [key: string]: unknown }
-): T {
+export function replaceTokens<T>(obj: T, context: { [key: string]: unknown }): T {
   if (typeof obj === "string") {
     return obj.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_original, key) => {
       const parts = key.split("|");
@@ -39,12 +36,8 @@ export function replaceTokens<T>(
       if (m) {
         return m[2];
       }
-      const transform =
-        TOKEN_TRANSFORMERS[parts[1] ? parts[1].trim() : ""] ||
-        TOKEN_TRANSFORMERS[""];
-      const ret = transform(
-        (_.get(context, parts[0].trim(), "") as string) ?? ""
-      );
+      const transform = TOKEN_TRANSFORMERS[parts[1] ? parts[1].trim() : ""] || TOKEN_TRANSFORMERS[""];
+      const ret = transform((_.get(context, parts[0].trim(), "") as string) ?? "");
       return ret;
     }) as unknown as T;
   }
