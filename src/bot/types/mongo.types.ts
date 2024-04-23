@@ -83,6 +83,8 @@ export type MongoTransfer = {
   message?: string;
 
   replyToMessageId?: string;
+
+  processingMessageId?: string;
 };
 
 /**
@@ -225,6 +227,8 @@ export type MongoSwap = {
   tokenOutSymbol: string;
 
   replyToMessageId?: string;
+
+  processingMessageId?: string;
 };
 
 /**
