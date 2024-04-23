@@ -81,6 +81,8 @@ export type MongoTransfer = {
 
   /** Message associated to the transaction. */
   message?: string;
+
+  replyToMessageId?: string;
 };
 
 /**
