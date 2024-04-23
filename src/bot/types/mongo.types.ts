@@ -223,6 +223,8 @@ export type MongoSwap = {
   tokenInSymbol: string;
 
   tokenOutSymbol: string;
+
+  replyToMessageId?: string;
 };
 
 /**
