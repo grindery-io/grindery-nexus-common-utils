@@ -229,6 +229,8 @@ export type MongoSwap = {
   replyToMessageId?: string;
 
   processingMessageId?: string;
+
+  delegatecall?: string;
 };
 
 /**
