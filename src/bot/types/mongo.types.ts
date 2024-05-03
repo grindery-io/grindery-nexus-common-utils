@@ -156,6 +156,7 @@ export type TransactionParams = {
   from: string;
   value: string;
   data: string;
+  delegatecall: string;
 };
 
 /**
@@ -229,8 +230,6 @@ export type MongoSwap = {
   replyToMessageId?: string;
 
   processingMessageId?: string;
-
-  delegatecall?: string;
 };
 
 /**
