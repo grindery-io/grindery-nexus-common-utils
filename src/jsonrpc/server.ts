@@ -15,6 +15,10 @@ async function handleRequest(server: JSONRPCServer<ServerParams>, body, extra: S
       if ([-32600, -32601, -32602, -32700].includes(result.error.code)) {
         return new Response(400, result);
       }
+      const status = result.error.data?.statusCode || result.error.data?.status || result.error.code;
+      if (typeof status === "number" && status >= 400 && status <= 599) {
+        return new Response(status, result);
+      }
       return new Response(500, result);
     }
     return result;
