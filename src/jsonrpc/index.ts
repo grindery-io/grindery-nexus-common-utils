@@ -1,6 +1,7 @@
 import {
   createJSONRPCErrorResponse,
   JSONRPCErrorCode,
+  JSONRPCErrorException,
   JSONRPCParams,
   JSONRPCServer,
   SimpleJSONRPCMethod,
@@ -23,6 +24,8 @@ const exceptionMiddleware = async (next, request, serverParams) => {
   } catch (error) {
     if (error instanceof InvalidParamsError) {
       return createJSONRPCErrorResponse(request.id, JSONRPCErrorCode.InvalidParams, error.message);
+    } else if (error instanceof JSONRPCErrorException) {
+      return createJSONRPCErrorResponse(request.id, error.code, error.message, error.data);
     } else if (error.isAxiosError) {
       return createJSONRPCErrorResponse(request.id, error.response?.status, error.message, {
         headers: error.response?.headers,
