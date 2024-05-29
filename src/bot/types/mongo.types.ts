@@ -85,6 +85,10 @@ export type MongoTransfer = {
   replyToMessageId?: string;
 
   processingMessageId?: string;
+
+  checkoutId?: string;
+
+  checkoutQuantity?: number;
 };
 
 /**
