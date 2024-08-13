@@ -84,7 +84,7 @@ type JWTPayloadPure = RemoveIndex<jose.JWTPayload>;
 
 export type TypedJWTPayload<T> = JWTPayloadPure & T;
 
-class JwtTools {
+export class JwtTools {
   private readonly keys: ReturnType<typeof initKeys>;
   constructor(private defaultIssuer: string, getMasterKey = defaultGetMasterKey) {
     this.keys = initKeys(getMasterKey);
@@ -135,6 +135,7 @@ class JwtTools {
     });
   // eslint-disable-next-line no-use-before-define
   typedCipher = <T = unknown>(audience: string): TypedCipher<T> => this._typedCipher<T>(audience);
+
   private _typedToken = <T>(audience: string) =>
     Object.freeze({
       sign: (payload: TypedJWTPayload<T>, expirationTime: number | string) =>
@@ -144,6 +145,40 @@ class JwtTools {
     });
   // eslint-disable-next-line no-use-before-define
   typedToken = <T = unknown>(audience: string): TypedToken<T> => this._typedToken<T>(audience);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private _authToken = <T extends Record<string, any> = Record<string, never>>(
+    whitelistedIssuers: Record<string, string | jose.JSONWebKeySet> = {}
+  ) => {
+    const issuerKeys = Object.fromEntries(
+      Object.entries(whitelistedIssuers).map(([k, v]) => [
+        k,
+        typeof v === "string" ? jose.createRemoteJWKSet(new URL(v)) : jose.createLocalJWKSet(v),
+      ])
+    );
+    return Object.freeze({
+      sign: (targetApp: string, payload: TypedJWTPayload<T> = {} as T) =>
+        this.signJWT({ aud: `${targetApp}:meta:auth-token:v1`, ...payload }, "10s"),
+      verify: async (token: string, options: jose.JWTVerifyOptions = {}) => {
+        const claims = jose.decodeJwt(token);
+        if (!claims.iss || !(claims.iss in issuerKeys)) {
+          throw new Error("Unknown issuer");
+        }
+        return (
+          await jose.jwtVerify(token, issuerKeys[claims.iss], {
+            audience: `${this.defaultIssuer}:meta:auth-token:v1`,
+            issuer: claims.iss,
+            maxTokenAge: "10s",
+            algorithms: ["ES256"],
+            ...options,
+          })
+        ).payload as T;
+      },
+    });
+  };
+  // eslint-disable-next-line no-use-before-define
+  authToken = <T = unknown>(whitelistedIssuers: Record<string, string | jose.JSONWebKeySet> = {}): AuthToken<T> =>
+    this._authToken<T>(whitelistedIssuers);
 }
 
 let instance: JwtTools;
@@ -157,5 +192,8 @@ export function getJwtTools(defaultIssuer: string, getMasterKey = defaultGetMast
 
 declare const _TYPING_typedToken: typeof instance["_typedToken"];
 declare const _TYPING_typedCipher: typeof instance["_typedCipher"];
+declare const _TYPING_authToken: typeof instance["_authToken"];
+
 export type TypedToken<T> = ReturnType<typeof _TYPING_typedToken<T>>;
 export type TypedCipher<T> = ReturnType<typeof _TYPING_typedCipher<T>>;
+export type AuthToken<T> = ReturnType<typeof _TYPING_authToken<T>>;
