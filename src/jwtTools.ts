@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 import { createHash, createPrivateKey, createPublicKey, KeyObject, webcrypto, createHmac } from "node:crypto";
 import KeyEncoder from "@tradle/key-encoder";
 import * as jose from "jose";
@@ -133,7 +134,7 @@ export class JwtTools {
       decrypt: async (token: string, options: jose.JWTDecryptOptions = {}) =>
         (await this.decryptJWT(token, { audience, ...options })).payload as TypedJWTPayload<T>,
     });
-  // eslint-disable-next-line no-use-before-define
+
   typedCipher = <T = unknown>(audience: string): TypedCipher<T> => this._typedCipher<T>(audience);
 
   private _typedToken = <T>(audience: string) =>
@@ -143,12 +144,12 @@ export class JwtTools {
       verify: async (token: string, options: jose.JWTVerifyOptions = {}) =>
         (await this.verifyJWT(token, { audience, ...options })).payload as TypedJWTPayload<T>,
     });
-  // eslint-disable-next-line no-use-before-define
+
   typedToken = <T = unknown>(audience: string): TypedToken<T> => this._typedToken<T>(audience);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _authToken = <T extends Record<string, any> = Record<string, never>>(
-    whitelistedIssuers: Record<string, string | jose.JSONWebKeySet> = {}
+    whitelistedIssuers: Record<string, string | jose.JSONWebKeySet>
   ) => {
     const issuerKeys = Object.fromEntries(
       Object.entries(whitelistedIssuers).map(([k, v]) => [
@@ -176,9 +177,10 @@ export class JwtTools {
       },
     });
   };
-  // eslint-disable-next-line no-use-before-define
-  authToken = <T = unknown>(whitelistedIssuers: Record<string, string | jose.JSONWebKeySet> = {}): AuthToken<T> =>
-    this._authToken<T>(whitelistedIssuers);
+
+  authToken = <T = unknown>(
+    whitelistedIssuers: Record<string, string | jose.JSONWebKeySet> = getWhitelistedIssuersFromEnv()
+  ): AuthToken<T> => this._authToken<T>(whitelistedIssuers);
 }
 
 let instance: JwtTools;
@@ -188,6 +190,15 @@ export function getJwtTools(defaultIssuer: string, getMasterKey = defaultGetMast
     instance = new JwtTools(defaultIssuer, getMasterKey);
   }
   return instance;
+}
+
+export function getWhitelistedIssuersFromEnv(envName = "AUTH_ISSUERS"): Record<string, string | jose.JSONWebKeySet> {
+  return Object.fromEntries(
+    (process.env[envName] ?? "")
+      .split(";")
+      .filter(Boolean)
+      .map((s) => s.trim().split(","))
+  );
 }
 
 declare const _TYPING_typedToken: typeof instance["_typedToken"];
