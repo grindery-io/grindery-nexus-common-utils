@@ -173,7 +173,7 @@ export class JwtTools {
             algorithms: ["ES256"],
             ...options,
           })
-        ).payload as T;
+        ).payload as TypedJWTPayload<T>;
       },
     });
   };
