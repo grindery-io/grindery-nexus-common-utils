@@ -8,7 +8,7 @@ import { ServerParams } from "./types";
 import { MuxedChildConnection, SimpleJsonRpcConnection, WithConnectionId } from "./connection";
 import { createConnectionManager } from "./connection/manager";
 
-async function handleRequest(server: JSONRPCServer<ServerParams>, body, extra: ServerParams) {
+export async function handleRequest(server: JSONRPCServer<ServerParams>, body, extra: ServerParams) {
   const result = await server.receive(body, extra);
   if (result) {
     if (result.error) {
