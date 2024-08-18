@@ -58,7 +58,8 @@ describe("Muxable JSON-RPC client", () => {
     const method = jest.fn((params, { connection }) =>
       connection.send({ jsonrpc: "2.0", method: "notify", params } as JSONRPCRequest)
     );
-    jr.addMethod("test", method);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    jr.addMethod("test", method as any);
     const port = await getPort();
     const { server } = runJsonRpcServer(jr, { port });
     await new Promise((res) => setTimeout(res, 100));

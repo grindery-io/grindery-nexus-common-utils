@@ -7,7 +7,10 @@ export class MuxedChildConnection<ParentType extends IJsonRpcConnection = IJsonR
   implements IJsonRpcConnection
 {
   private closed = false;
-  constructor(protected readonly parent: ParentType, public readonly connectionId: string) {
+  constructor(
+    protected readonly parent: ParentType,
+    public readonly connectionId: string
+  ) {
     super();
     parent.once("close", this.handleClose.bind(this));
     parent.once("error", this.handleError.bind(this));
@@ -44,7 +47,8 @@ export class MuxedChildConnection<ParentType extends IJsonRpcConnection = IJsonR
           },
           connectionId: this.connectionId,
         } as (JSONRPCRequest | JSONRPCResponse) & WithConnectionId);
-      } catch (e) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_) {
         // Ignore
       }
     }

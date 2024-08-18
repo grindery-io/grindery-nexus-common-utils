@@ -11,6 +11,7 @@ import { ServerParams } from "./types";
 
 export * from "./connection";
 export * from "./client";
+export * from "./typedClient";
 export * from "./types";
 
 export class InvalidParamsError extends Error {

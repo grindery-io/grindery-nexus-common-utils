@@ -45,6 +45,9 @@ export function replaceTokens<T>(obj: T, context: { [key: string]: unknown }): T
     if (Array.isArray(obj)) {
       return obj.map((item) => replaceTokens(item, context)) as unknown as T;
     }
+    if (!obj) {
+      return obj;
+    }
     return Object.entries(obj).reduce((acc, [key, value]) => {
       acc[key] = replaceTokens(value, context);
       return acc;

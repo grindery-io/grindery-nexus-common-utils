@@ -87,7 +87,10 @@ export type TypedJWTPayload<T> = JWTPayloadPure & T;
 
 export class JwtTools {
   private readonly keys: ReturnType<typeof initKeys>;
-  constructor(private defaultIssuer: string, getMasterKey = defaultGetMasterKey) {
+  constructor(
+    private defaultIssuer: string,
+    getMasterKey = defaultGetMasterKey
+  ) {
     this.keys = initKeys(getMasterKey);
   }
   encryptJWT = async (payload: jose.JWTPayload, expirationTime: number | string) =>
@@ -178,7 +181,7 @@ export class JwtTools {
     });
   };
 
-  authToken = <T = unknown>(
+  authToken = <T extends Record<string, unknown> = Record<string, never>>(
     whitelistedIssuers: Record<string, string | jose.JSONWebKeySet> = getWhitelistedIssuersFromEnv()
   ): AuthToken<T> => this._authToken<T>(whitelistedIssuers);
 }
@@ -201,10 +204,13 @@ export function getWhitelistedIssuersFromEnv(envName = "AUTH_ISSUERS"): Record<s
   );
 }
 
-declare const _TYPING_typedToken: typeof instance["_typedToken"];
-declare const _TYPING_typedCipher: typeof instance["_typedCipher"];
-declare const _TYPING_authToken: typeof instance["_authToken"];
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+declare const _TYPING_typedToken: (typeof instance)["_typedToken"];
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+declare const _TYPING_typedCipher: (typeof instance)["_typedCipher"];
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+declare const _TYPING_authToken: (typeof instance)["_authToken"];
 
 export type TypedToken<T> = ReturnType<typeof _TYPING_typedToken<T>>;
 export type TypedCipher<T> = ReturnType<typeof _TYPING_typedCipher<T>>;
-export type AuthToken<T> = ReturnType<typeof _TYPING_authToken<T>>;
+export type AuthToken<T extends Record<string, unknown>> = ReturnType<typeof _TYPING_authToken<T>>;
