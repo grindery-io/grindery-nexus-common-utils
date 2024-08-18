@@ -10,7 +10,6 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createTypedJsonRpcClient<T extends { [name: string]: (params: any, ...args: any[]) => Promise<any> }>(
   url: string,
-  issuer: string,
   getHeaders = async <Method extends keyof T>(_name: keyof T, ..._params: Parameters<T[Method]>) =>
     ({}) as AxiosRequestHeaders
 ): Readonly<{ [K in keyof T]: T[K] }> {
