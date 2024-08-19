@@ -132,9 +132,9 @@ export class JwtTools {
   getPublicJwk = async () => jose.exportJWK((await this.keys).ECDSA_PUBLIC);
   private _typedCipher = <T>(audience: string) =>
     Object.freeze({
-      encrypt: (payload: TypedJWTPayload<T>, expirationTime: number | string) =>
-        this.encryptJWT({ aud: audience, ...payload }, expirationTime),
-      decrypt: async (token: string, options: jose.JWTDecryptOptions = {}) =>
+      encrypt: async (payload: TypedJWTPayload<T>, expirationTime: number | string): Promise<string> =>
+        await this.encryptJWT({ aud: audience, ...payload }, expirationTime),
+      decrypt: async (token: string, options: jose.JWTDecryptOptions = {}): Promise<TypedJWTPayload<T>> =>
         (await this.decryptJWT(token, { audience, ...options })).payload as TypedJWTPayload<T>,
     });
 
@@ -142,9 +142,9 @@ export class JwtTools {
 
   private _typedToken = <T>(audience: string) =>
     Object.freeze({
-      sign: (payload: TypedJWTPayload<T>, expirationTime: number | string) =>
-        this.signJWT({ aud: audience, ...payload }, expirationTime),
-      verify: async (token: string, options: jose.JWTVerifyOptions = {}) =>
+      sign: async (payload: TypedJWTPayload<T>, expirationTime: number | string): Promise<string> =>
+        await this.signJWT({ aud: audience, ...payload }, expirationTime),
+      verify: async (token: string, options: jose.JWTVerifyOptions = {}): Promise<TypedJWTPayload<T>> =>
         (await this.verifyJWT(token, { audience, ...options })).payload as TypedJWTPayload<T>,
     });
 
@@ -161,9 +161,9 @@ export class JwtTools {
       ])
     );
     return Object.freeze({
-      sign: (targetApp: string, payload: TypedJWTPayload<T> = {} as T) =>
-        this.signJWT({ aud: `${targetApp}:meta:auth-token:v1`, ...payload }, "10s"),
-      verify: async (token: string, options: jose.JWTVerifyOptions = {}) => {
+      sign: async (targetApp: string, payload: TypedJWTPayload<T> = {} as T): Promise<string> =>
+        await this.signJWT({ aud: `${targetApp}:meta:auth-token:v1`, ...payload }, "10s"),
+      verify: async (token: string, options: jose.JWTVerifyOptions = {}): Promise<TypedJWTPayload<T>> => {
         const claims = jose.decodeJwt(token);
         if (!claims.iss || !(claims.iss in issuerKeys)) {
           throw new Error("Unknown issuer");
