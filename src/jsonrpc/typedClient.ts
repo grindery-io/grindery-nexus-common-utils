@@ -37,6 +37,18 @@ export function createTypedJsonRpcClient<T extends { [name: string]: (params: an
                 headers: await getHeaders(name, params),
               }
             );
+            if (resp.data.jsonrpc !== "2.0") {
+              throw new Error(`Malformed JSON-RPC response: ${JSON.stringify(resp.data)}`);
+            }
+            if (resp.data?.error) {
+              const error = new JSONRPCErrorException(
+                resp.data.error.message,
+                resp.data.error.code,
+                resp.data.error.data
+              );
+              Object.assign(error, { statusCode: resp.status });
+              throw error;
+            }
             return resp.data?.result;
           } catch (_e) {
             const e = _e as AxiosError;
