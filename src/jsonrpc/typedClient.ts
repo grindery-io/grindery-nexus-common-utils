@@ -10,10 +10,11 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createTypedJsonRpcClient<T extends { [name: string]: (params: any, ...args: any[]) => Promise<any> }>(
   url: string,
-  getHeaders = async <Method extends keyof T>(_name: keyof T, ..._params: Parameters<T[Method]>) =>
-    ({}) as AxiosRequestHeaders
-): Readonly<{ [K in keyof T]: T[K] }> {
-  const methodCache = new Map<string, (...args: unknown[]) => Promise<unknown>>();
+  getHeaders = async <Method extends keyof T>(_name: keyof T, _params: Parameters<T[Method]>[0]) =>
+    ({}) as AxiosRequestHeaders,
+  methodPrefix = ""
+): Readonly<{ [K in keyof T]: (params: Parameters<T[K]>[0]) => Promise<ReturnType<T[K]>> }> {
+  const methodCache = new Map<string, (params: JSONRPCParams) => Promise<unknown>>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return new Proxy({} as any, {
     get(target, name) {
@@ -21,19 +22,19 @@ export function createTypedJsonRpcClient<T extends { [name: string]: (params: an
         return target[name];
       }
       if (!methodCache.has(name)) {
-        methodCache.set(name, async (...args) => {
+        methodCache.set(name, async (params) => {
           try {
             const resp = await axios.post<JSONRPCResponse>(
               url,
               {
                 jsonrpc: "2.0",
                 id: "1",
-                method: name,
-                params: args[0] as JSONRPCParams,
+                method: methodPrefix + name,
+                params,
               } satisfies JSONRPCRequest,
               {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                headers: await getHeaders(name, ...(args as any)),
+                headers: await getHeaders(name, params),
               }
             );
             return resp.data?.result;
