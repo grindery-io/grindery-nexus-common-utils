@@ -38,6 +38,18 @@
     "uuid": "^8.3.2",
     "ws": "^8.7.0"
   },
+  "peerDependencies": {
+    "ethers": "^6",
+    "joi": "^17"
+  },
+  "peerDependenciesMeta": {
+    "joi": {
+      "optional": true
+    },
+    "ethers": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@tsconfig/node16": "^1.0.2",
     "@types/express": "^4.17.1",
