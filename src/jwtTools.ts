@@ -109,7 +109,7 @@ export class TypedToken<T> {
 }
 
 export class AuthToken<T> {
-  private readonly issuerKeys: Record<string, ReturnType<typeof jose.createRemoteJWKSet>>;
+  private readonly issuerKeys: Record<string, ReturnType<typeof jose.createLocalJWKSet>>;
   constructor(
     private readonly jwtTools: JwtTools,
     whitelistedIssuers: Record<string, string | jose.JSONWebKeySet>
