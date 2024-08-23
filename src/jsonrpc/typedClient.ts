@@ -21,6 +21,9 @@ export function createTypedJsonRpcClient<T extends { [name: string]: (params: an
       if (typeof name !== "string" || target[name]) {
         return target[name];
       }
+      if (["then", "catch", "finally"].includes(name)) {
+        return target[name];
+      }
       if (!methodCache.has(name)) {
         methodCache.set(name, async (params) => {
           try {
