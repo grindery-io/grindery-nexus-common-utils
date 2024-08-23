@@ -13,7 +13,7 @@ export function createTypedJsonRpcClient<T extends { [name: string]: (params: an
   getHeaders = async <Method extends keyof T>(_name: keyof T, _params: Parameters<T[Method]>[0]) =>
     ({}) as AxiosRequestHeaders,
   methodPrefix = ""
-): Readonly<{ [K in keyof T]: (params: Parameters<T[K]>[0]) => Promise<ReturnType<T[K]>> }> {
+): Readonly<{ [K in keyof T]: (params: Parameters<T[K]>[0]) => Promise<Awaited<ReturnType<T[K]>>> }> {
   const methodCache = new Map<string, (params: JSONRPCParams) => Promise<unknown>>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return new Proxy({} as any, {
