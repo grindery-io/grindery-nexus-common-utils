@@ -33,7 +33,19 @@ async function getSecretVersion(envName: string): Promise<string> {
   return secretValue;
 }
 
-export const secretManagerGetter = (envName: string, refreshMs = 60000, invalidMs = 86400 * 7 * 1000) => {
+/**
+ * Returns a memoized function that retrieves a secret value from Google Cloud Secret Manager.
+ *
+ * @param {string} envName - The name of the environment variable containing the secret path.
+ * @param {number} [refreshMs=60000] - The time interval in milliseconds to refresh the secret value.
+ * @param {number} [invalidMs=604800000] - The time interval in milliseconds to invalidate the secret value.
+ * @return {() => Promise<string>} An async function that returns the secret value.
+ */
+export function secretManagerGetter(
+  envName: string,
+  refreshMs: number = 60000,
+  invalidMs: number = 86400 * 7 * 1000
+): () => Promise<string> {
   ensureEnv(envName);
-  return lazyMemo<string>(refreshMs, invalidMs, async () => await getSecretVersion(envName));
-};
+  return lazyMemo(refreshMs, invalidMs, async () => await getSecretVersion(envName));
+}
