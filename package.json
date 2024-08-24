@@ -3,6 +3,10 @@
   "version": "2.0.57",
   "description": "Common functions and type definitions for Grindery Nexus",
   "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js"
+  },
   "scripts": {
     "prepare": "tsc && husky install",
     "watch": "tsc --watch",
@@ -39,14 +43,18 @@
     "ws": "^8.7.0"
   },
   "peerDependencies": {
+    "@google-cloud/secret-manager": "^5",
     "ethers": "^6",
     "joi": "^17"
   },
   "peerDependenciesMeta": {
-    "joi": {
+    "@google-cloud/secret-manager": {
       "optional": true
     },
     "ethers": {
+      "optional": true
+    },
+    "joi": {
       "optional": true
     }
   },
