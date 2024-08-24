@@ -1,5 +1,5 @@
 import { describe, expect, test } from "@jest/globals";
-import { replaceTokens } from ".";
+import { replaceTokens } from "./replaceTokens";
 
 describe("replaceTokens", () => {
   test("simple", () => {
