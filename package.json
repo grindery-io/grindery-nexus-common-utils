@@ -1,12 +1,14 @@
 {
   "name": "grindery-nexus-common-utils",
-  "version": "2.0.59",
+  "version": "2.0.60",
   "description": "Common functions and type definitions for Grindery Nexus",
   "main": "dist/index.js",
   "exports": {
     ".": "./dist/index.js",
-    "./*": "./dist/*.js"
+    "./*": "./dist/*.js",
+    "./dist/*": "./dist/*.js"
   },
+  "sideEffects": false,
   "scripts": {
     "prepare": "tsc && husky install",
     "watch": "tsc --watch",
