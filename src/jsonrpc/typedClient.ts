@@ -12,7 +12,7 @@ export function createTypedJsonRpcClient<T extends { [name: string]: (params: an
   url: string,
   getHeaders = async <Method extends keyof T>(_name: keyof T, _params: Parameters<T[Method]>[0]) =>
     ({}) as AxiosRequestHeaders,
-  methodPrefix = ""
+  { timeout = 15000, methodPrefix = "" } = {}
 ): Readonly<{ [K in keyof T]: (params: Parameters<T[K]>[0]) => Promise<Awaited<ReturnType<T[K]>>> }> {
   const methodCache = new Map<string, (params: JSONRPCParams) => Promise<unknown>>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,6 +38,7 @@ export function createTypedJsonRpcClient<T extends { [name: string]: (params: an
               {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 headers: await getHeaders(name, params),
+                timeout,
               }
             );
             if (resp.data.jsonrpc !== "2.0") {
