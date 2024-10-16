@@ -117,7 +117,13 @@ export class AuthToken<T> {
     this.issuerKeys = Object.fromEntries(
       Object.entries(whitelistedIssuers).map(([k, v]) => [
         k,
-        typeof v === "string" ? jose.createRemoteJWKSet(new URL(v)) : jose.createLocalJWKSet(v),
+        typeof v === "string"
+          ? jose.createRemoteJWKSet(new URL(v), {
+              timeoutDuration: 5000,
+              cooldownDuration: 1000,
+              cacheMaxAge: 1000 * 60 * 60 * 24,
+            })
+          : jose.createLocalJWKSet(v),
       ])
     );
   }
