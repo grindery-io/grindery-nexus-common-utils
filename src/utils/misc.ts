@@ -47,10 +47,21 @@ export function lazyMemo<T, Args extends any[]>(
 ): () => Promise<T> {
   let ts = -invalidMs * 2;
   let value: T;
-  async function refresh(...args: Args) {
+  async function _refresh(...args: Args) {
     value = await getter(...args);
     ts = Date.now();
     return value;
+  }
+  let refreshPromise: ReturnType<typeof _refresh> | null = null;
+  async function refresh(...args: Args) {
+    if (!refreshPromise) {
+      refreshPromise = _refresh(...args);
+    }
+    try {
+      return await refreshPromise;
+    } finally {
+      refreshPromise = null;
+    }
   }
   return async (...args: Args) => {
     if (Date.now() > ts + invalidMs) {
