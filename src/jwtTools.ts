@@ -138,7 +138,8 @@ export class AuthToken<T> {
       await jose.jwtVerify(token, this.issuerKeys[claims.iss], {
         audience: `${this.jwtTools.defaultIssuer}:meta:auth-token:v1`,
         issuer: claims.iss,
-        maxTokenAge: "10s",
+        clockTolerance: "15s",
+        maxTokenAge: "30s",
         algorithms: ["ES256"],
         ...options,
       })
