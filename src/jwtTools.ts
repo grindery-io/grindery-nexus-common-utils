@@ -108,6 +108,28 @@ export class TypedToken<T> {
     (await this.jwtTools.verifyJWT(token, { audience: this.audience, ...options })).payload as TypedJWTPayload<T>;
 }
 
+export class TypedExternalToken<T> {
+  constructor(
+    private readonly audience: string,
+    private readonly issuer: string,
+    private readonly keySet: ReturnType<typeof jose.createLocalJWKSet>
+  ) {}
+  verify = async (token: string, options: jose.JWTVerifyOptions = {}): Promise<TypedJWTPayload<T>> => {
+    const claims = jose.decodeJwt(token);
+    if (claims.iss !== this.issuer) {
+      throw new Error("Invalid issuer");
+    }
+    return (
+      await jose.jwtVerify(token, this.keySet, {
+        audience: this.audience,
+        issuer: this.issuer,
+        algorithms: ["ES256"],
+        ...options,
+      })
+    ).payload as TypedJWTPayload<T>;
+  };
+}
+
 export class AuthToken<T> {
   private readonly issuerKeys: Record<string, ReturnType<typeof jose.createLocalJWKSet>>;
   constructor(
@@ -115,16 +137,7 @@ export class AuthToken<T> {
     whitelistedIssuers: Record<string, string | jose.JSONWebKeySet>
   ) {
     this.issuerKeys = Object.fromEntries(
-      Object.entries(whitelistedIssuers).map(([k, v]) => [
-        k,
-        typeof v === "string"
-          ? jose.createRemoteJWKSet(new URL(v), {
-              timeoutDuration: 5000,
-              cooldownDuration: 1000,
-              cacheMaxAge: 1000 * 60 * 60 * 24,
-            })
-          : jose.createLocalJWKSet(v),
-      ])
+      Object.entries(whitelistedIssuers).map(([k, v]) => [k, createKeySetAdaptive(v)])
     );
   }
   sign = async (targetApp: string, payload?: TypedJWTPayload<T> | undefined): Promise<string> =>
@@ -200,9 +213,24 @@ export class JwtTools {
   authToken = <T extends Record<string, unknown> = Record<string, never>>(
     whitelistedIssuers: Record<string, string | jose.JSONWebKeySet> = getWhitelistedIssuersFromEnv()
   ) => new AuthToken<T>(this, whitelistedIssuers);
+
+  externalTypedToken = <T = unknown>(audience: string, issuer: string, keySet: string | jose.JSONWebKeySet = "") =>
+    new TypedExternalToken<T>(audience, issuer, createKeySetAdaptive(keySet || getIssuerKeyFromEnv(issuer)));
 }
 
 let instance: JwtTools;
+
+function createKeySetAdaptive(
+  v: string | jose.JSONWebKeySet
+): (protectedHeader?: jose.JWSHeaderParameters, token?: jose.FlattenedJWSInput) => Promise<jose.KeyLike> {
+  return typeof v === "string"
+    ? jose.createRemoteJWKSet(new URL(v), {
+        timeoutDuration: 5000,
+        cooldownDuration: 1000,
+        cacheMaxAge: 1000 * 60 * 60 * 24,
+      })
+    : jose.createLocalJWKSet(v);
+}
 
 export function getJwtTools(defaultIssuer: string, getMasterKey = defaultGetMasterKey) {
   if (!instance) {
@@ -211,11 +239,23 @@ export function getJwtTools(defaultIssuer: string, getMasterKey = defaultGetMast
   return instance;
 }
 
-export function getWhitelistedIssuersFromEnv(envName = "AUTH_ISSUERS"): Record<string, string | jose.JSONWebKeySet> {
+const DEFAULT_AUTH_ISSUERS_ENV = "AUTH_ISSUERS";
+export function getWhitelistedIssuersFromEnv(
+  envName = DEFAULT_AUTH_ISSUERS_ENV
+): Record<string, string | jose.JSONWebKeySet> {
   return Object.fromEntries(
     (process.env[envName] ?? "")
       .split(";")
       .filter(Boolean)
       .map((s) => s.trim().split(","))
+      .map(([k, v]) => [k, v.toLowerCase().startsWith("http") ? v : JSON.parse(Buffer.from(v, "base64").toString())])
   );
+}
+
+export function getIssuerKeyFromEnv(issuer: string, envName = DEFAULT_AUTH_ISSUERS_ENV): string | jose.JSONWebKeySet {
+  const ret = getWhitelistedIssuersFromEnv(envName)[issuer];
+  if (!ret) {
+    throw new Error(`Issuer ${issuer} not found in ${envName}`);
+  }
+  return ret;
 }
