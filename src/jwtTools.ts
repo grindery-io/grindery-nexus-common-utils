@@ -109,15 +109,19 @@ export class TypedToken<T> {
 }
 
 export class TypedExternalToken<T> {
+  private keySet: ReturnType<typeof jose.createLocalJWKSet> | null = null;
   constructor(
     private readonly audience: string,
     private readonly issuer: string,
-    private readonly keySet: ReturnType<typeof jose.createLocalJWKSet>
+    private readonly keySetGetter: () => ReturnType<typeof jose.createLocalJWKSet>
   ) {}
   verify = async (token: string, options: jose.JWTVerifyOptions = {}): Promise<TypedJWTPayload<T>> => {
     const claims = jose.decodeJwt(token);
     if (claims.iss !== this.issuer) {
       throw new Error("Invalid issuer");
+    }
+    if (!this.keySet) {
+      this.keySet = this.keySetGetter();
     }
     return (
       await jose.jwtVerify(token, this.keySet, {
@@ -215,7 +219,7 @@ export class JwtTools {
   ) => new AuthToken<T>(this, whitelistedIssuers);
 
   externalTypedToken = <T = unknown>(audience: string, issuer: string, keySet: string | jose.JSONWebKeySet = "") =>
-    new TypedExternalToken<T>(audience, issuer, createKeySetAdaptive(keySet || getIssuerKeyFromEnv(issuer)));
+    new TypedExternalToken<T>(audience, issuer, () => createKeySetAdaptive(keySet || getIssuerKeyFromEnv(issuer)));
 }
 
 let instance: JwtTools;
